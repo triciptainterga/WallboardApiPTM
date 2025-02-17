@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+https://go.microsoft.com/fwlink/?LinkID=208121.
+-->
+<Project>
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <_PublishTargetUrl>C:\publish\Bawaslu</_PublishTargetUrl>
+    <History>True|2024-12-23T22:06:20.9492285Z||;True|2024-12-24T04:54:14.6727342+07:00||;True|2024-12-23T19:33:12.5383834+07:00||;False|2024-12-23T19:32:29.5535054+07:00||;True|2024-12-14T10:35:35.1409310+07:00||;True|2024-12-14T10:27:19.5324775+07:00||;True|2024-12-14T10:17:47.0063501+07:00||;True|2024-12-14T08:13:42.4845267+07:00||;True|2024-12-14T08:06:02.5218444+07:00||;True|2024-12-13T20:42:10.1959719+07:00||;True|2024-12-13T17:35:24.5774170+07:00||;True|2024-12-13T13:01:50.0372204+07:00||;True|2024-12-11T11:24:11.4842748+07:00||;True|2024-12-11T04:46:00.9402350+07:00||;True|2024-12-08T13:50:26.7620219+07:00||;True|2024-12-08T06:34:16.0906335+07:00||;True|2024-12-08T06:24:13.6669343+07:00||;True|2024-12-06T13:50:03.6367397+07:00||;True|2024-12-06T13:05:23.5337532+07:00||;True|2024-12-06T08:51:23.5112515+07:00||;True|2024-12-04T11:44:15.3894137+07:00||;True|2024-12-03T10:16:06.6555611+07:00||;True|2024-12-03T00:50:06.2851348+07:00||;True|2024-11-16T16:56:25.4857652+07:00||;True|2024-11-16T16:33:04.4472528+07:00||;True|2024-11-16T15:59:53.3468150+07:00||;True|2024-11-14T23:56:06.2205571+07:00||;True|2024-11-14T23:14:41.3705699+07:00||;True|2024-11-14T23:08:02.2658279+07:00||;True|2024-11-14T22:08:26.2001650+07:00||;True|2024-11-14T21:29:12.5309567+07:00||;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+  <ItemGroup>
+    <DestinationConnectionStrings Include="DefaultConnection">
+      <Value>Server=10.216.206.5%3bDatabase=Bravo%3bUser Id=Sa%3bPassword=Uid35k32!J4y4J4y4%3bMultipleActiveResultSets=true%3b</Value>
+    </DestinationConnectionStrings>
+  </ItemGroup>
+</Project>
