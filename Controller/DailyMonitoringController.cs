@@ -18,7 +18,7 @@ namespace WEBAPI_Bravo.Controller
 
     [Route("api/[controller]")]
     [ApiController]
-    public class DailyMonitoringController : ControllerBase
+    public class ExecutiveMonitoringController : ControllerBase
     {
 
 
@@ -28,7 +28,7 @@ namespace WEBAPI_Bravo.Controller
         private readonly string _AvayaconnectionString;
         private readonly string _CrmconnectionString;
 
-        public DailyMonitoringController(sqlContext context, IConfiguration configuration)
+        public ExecutiveMonitoringController(sqlContext context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;
@@ -39,7 +39,7 @@ namespace WEBAPI_Bravo.Controller
 
 
 
-        [HttpGet("GetDataInteractionDaily")]
+        [HttpGet("GetDataInteraction")]
         public async Task<IActionResult> GetDataTotalInteraction(string startDate, string EndDate, string Tenant)
         {
             var avayaConnectionString = _configuration.GetConnectionString("AvayaConnection");
@@ -107,30 +107,29 @@ namespace WEBAPI_Bravo.Controller
 
 
     }
+
+
+    public class executiveMonitoring
+    {
+        public int incoming { get; set; }
+        public decimal answer { get; set; }
+    }
+    public class AvayaVoice
+    {
+        public int Voice { get; set; }
+
+    }
+    public class OcmData
+    {
+        public int multichat { get; set; }
+
+    }
+
+    public class EmailData
+    {
+        public int Email { get; set; }
+
+    }
 }
-
-
-public class executiveMonitoring
-{
-    public int incoming { get; set; }
-    public decimal answer { get; set; }
-}
-public class AvayaVoice
-{
-    public int Voice { get; set; }
-    
-}
-public class OcmData
-{
-    public int multichat { get; set; }
-
-}
-
-public class EmailData
-{
-    public int Email { get; set; }
-
-}
-
 
 

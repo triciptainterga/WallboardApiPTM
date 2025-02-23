@@ -32,10 +32,10 @@ namespace WEBAPI_Bravo.Controller
 
         public IActionResult NewSummaryDaily()
         {
-
             string localDirectory = @"E:\DataAvaya";
             string filePath = Path.Combine(localDirectory, "Summary_Daily.txt");
-            NewSummaryDaily totalsData;
+            NewSummaryDaily? totalsData = null;
+            List<NewSummaryDaily> parsedDataRows = new List<NewSummaryDaily>();
 
             try
             {
@@ -44,39 +44,51 @@ namespace WEBAPI_Bravo.Controller
                     return NotFound("File not found.");
                 }
 
-
-
                 List<string> data = System.IO.File.ReadAllLines(filePath).ToList();
 
-                var headerRow = data.FirstOrDefault(row => row.Contains("Date;"));
-                var dataRows = data.SkipWhile(row => !row.Contains("Totals")).ToList();  // Skip metadata rows and start from Totals
+                // Extract the header row
+                var headerRow = data.FirstOrDefault(row => row.StartsWith("Date;"));
 
-                // Process the "Totals" row
-                var totalsRow = dataRows.FirstOrDefault(row => row.StartsWith("Totals"));
-                if (totalsRow != null)
+                // Extract data rows starting from "Totals"
+                var dataRows = data.SkipWhile(row => !row.StartsWith("Totals")).ToList();
+
+                if (dataRows.Any())
                 {
-                    totalsData = ParseData(totalsRow);
+                    var totalsRow = dataRows.FirstOrDefault(row => row.StartsWith("Totals"));
 
-                    return Ok(totalsData);
+                    if (totalsRow != null)
+                    {
+                        totalsData = ParseData(totalsRow);
 
+                        // Parse all data rows excluding "Totals"
+                        foreach (var row in dataRows.Skip(1)) // Skip "Totals"
+                        {
+                            var parsedRow = ParseData(row);
+                            if (parsedRow != null)
+                            {
+                                parsedDataRows.Add(parsedRow);
+                            }
+                        }
 
+                        return Ok(new
+                        {
+                            Header = headerRow,
+                            TotalsRow = totalsData,
+                            DataRows = parsedDataRows // Now structured as a list of objects
+                        });
+                    }
                 }
-                else
-                {
-                    Console.WriteLine("Totals row not found.");
-                }
-                return Ok(totalsRow);
+
+                Console.WriteLine("Totals row not found.");
+                return Ok(new { Header = headerRow, TotalsRow = (string?)null, DataRows = parsedDataRows });
             }
-
-
-
             catch (Exception ex)
             {
-
-                return StatusCode(500, ex.ToString());
+                return StatusCode(500, new { Message = "An error occurred", Error = ex.ToString() });
             }
-
         }
+
+
 
         [HttpGet("ActualRelativeToTargetDaily")]
 
@@ -85,7 +97,7 @@ namespace WEBAPI_Bravo.Controller
 
             string localDirectory = @"E:\DataAvaya";
             string filePath = Path.Combine(localDirectory, "ActualRelativeToTargetDaily.txt");
-            string value="0";
+            string value = "0";
 
             try
             {
@@ -96,14 +108,14 @@ namespace WEBAPI_Bravo.Controller
 
                 var lines = System.IO.File.ReadAllLines(filePath);
 
-               // var targetLine = lines.FirstOrDefault(line => line.Contains("CH_Livechat_UAT"));
+                // var targetLine = lines.FirstOrDefault(line => line.Contains("CH_Livechat_UAT"));
 
                 if (lines != null)
                 {
-                  //  var parts = lines.Split(';');
+                    //  var parts = lines.Split(';');
                     if (lines.Length > 1)
                     {
-                         value = lines[4].Trim();
+                        value = lines[4].Trim();
                         Console.WriteLine($"The value for CH_Livechat_UAT is: {value}");
                     }
                     else
@@ -170,7 +182,7 @@ namespace WEBAPI_Bravo.Controller
                         // Skip empty lines
                         if (string.IsNullOrWhiteSpace(line)) continue;
 
-                      
+
 
                         // Split data by semicolon
                         string[] values = line.Split(';');
@@ -178,10 +190,10 @@ namespace WEBAPI_Bravo.Controller
                         // Validate that the line has enough columns
                         if (values.Length < 15) continue;
 
-                       
 
-                            if (values[0].Contains("AVAIL") || values[0].Contains("AUX"))
-                            {
+
+                        if (values[0].Contains("AVAIL") || values[0].Contains("AUX"))
+                        {
 
                             ACDActivity activityRow = new ACDActivity
                             {
@@ -206,7 +218,8 @@ namespace WEBAPI_Bravo.Controller
                             // Read data for ACDStats
 
                         }
-                            else {
+                        else
+                        {
                             ACDStats statsRow = new ACDStats
                             {
                                 SplitSkill = values[0],
@@ -227,10 +240,10 @@ namespace WEBAPI_Bravo.Controller
                             };
 
                             statsList.Add(statsRow);
-                            
-                            }
-                     
-                       
+
+                        }
+
+
                     }
                 }
 
@@ -313,7 +326,7 @@ namespace WEBAPI_Bravo.Controller
             string localDirectory = @"E:\DataAvaya";
             string filePath = Path.Combine(localDirectory, "SplitSkillSummaryIntervalNew.txt");
 
-          
+
             Totals totalsData;
 
             try
@@ -542,65 +555,65 @@ namespace WEBAPI_Bravo.Controller
             return acdDataList;
         }
 
-        
-            //public List<SplitSkillSummary> ParseSummaryData(string input)
-            //{
-            //    var summaryList = new List<SplitSkillSummary>();
 
-            //    using (var reader = new StringReader(input))
-            //    {
-            //        string line;
-            //        while ((line = reader.ReadLine()) != null)
-            //        {
-            //            var columns = line.Split(';');
+        //public List<SplitSkillSummary> ParseSummaryData(string input)
+        //{
+        //    var summaryList = new List<SplitSkillSummary>();
 
-            //            // Skip headers
-            //            if (columns.Length < 3 || columns[0] == "Totals")
-            //                continue;
+        //    using (var reader = new StringReader(input))
+        //    {
+        //        string line;
+        //        while ((line = reader.ReadLine()) != null)
+        //        {
+        //            var columns = line.Split(';');
 
-            //            var summary = new SplitSkillSummary
-            //            {
-            //                SplitSkill = columns[0],
-            //                Time = columns[1],
-            //                CallOffered = int.TryParse(columns[2], out int temp1) ? temp1 : 0,
-            //                Accepted = int.TryParse(columns[3], out int temp2) ? temp2 : 0,
-            //                ACDCalls = int.TryParse(columns[4], out int temp3) ? temp3 : 0,
-            //                AbanCalls = int.TryParse(columns[5], out int temp4) ? temp4 : 0,
-            //                AbanCallsLessThan5Sec = int.TryParse(columns[6], out int temp5) ? temp5 : 0,
-            //                AbanCallsMoreThan5Sec = int.TryParse(columns[7], out int temp6) ? temp6 : 0,
-            //                ABNTIME = int.TryParse(columns[8], out int temp7) ? temp7 : 0,
-            //                ForcedDiscCalls = int.TryParse(columns[9], out int temp8) ? temp8 : 0,
-            //                ForcedBusyCalls = int.TryParse(columns[10], out int temp9) ? temp9 : 0,
-            //                FlowOut = int.TryParse(columns[11], out int temp10) ? temp10 : 0,
-            //                AvgSpeedAns = double.TryParse(columns[12], out double temp11) ? temp11 : 0,
-            //                AvgACDTime = columns[13],
-            //                AvgACWTime = columns[14],
-            //                AvgAbanTime = columns[15],
-            //                FlowIn = double.TryParse(columns[16], out double temp12) ? temp12 : 0,
-            //                ExtnOutCalls = int.TryParse(columns[17], out int temp13) ? temp13 : 0,
-            //                AvgExtnOutTime = double.TryParse(columns[18], out double temp14) ? temp14 : 0,
-            //                ACDTimePercentage = double.TryParse(columns[19], out double temp15) ? temp15 : 0,
-            //                AnsCallsPercentage = double.TryParse(columns[20], out double temp16) ? temp16 : 0,
-            //                AbandCallsPercentage = double.TryParse(columns[21], out double temp17) ? temp17 : 0,
-            //                AvgPosStaff = double.TryParse(columns[22], out double temp18) ? temp18 : 0,
-            //                CallsPerPos = double.TryParse(columns[23], out double temp19) ? temp19 : 0,
-            //                HeldCalls = int.TryParse(columns[24], out int temp20) ? temp20 : 0,
-            //                HoldTime = columns[25],
-            //                AvgHoldTime = columns[26],
-            //                AHT = columns[27],
-            //                PercentWithinServiceLevel = double.TryParse(columns[28], out double temp21) ? temp21 : 0,
-            //                SL = columns[29]
-            //            };
+        //            // Skip headers
+        //            if (columns.Length < 3 || columns[0] == "Totals")
+        //                continue;
 
-            //            summaryList.Add(summary);
-            //        }
-            //    }
+        //            var summary = new SplitSkillSummary
+        //            {
+        //                SplitSkill = columns[0],
+        //                Time = columns[1],
+        //                CallOffered = int.TryParse(columns[2], out int temp1) ? temp1 : 0,
+        //                Accepted = int.TryParse(columns[3], out int temp2) ? temp2 : 0,
+        //                ACDCalls = int.TryParse(columns[4], out int temp3) ? temp3 : 0,
+        //                AbanCalls = int.TryParse(columns[5], out int temp4) ? temp4 : 0,
+        //                AbanCallsLessThan5Sec = int.TryParse(columns[6], out int temp5) ? temp5 : 0,
+        //                AbanCallsMoreThan5Sec = int.TryParse(columns[7], out int temp6) ? temp6 : 0,
+        //                ABNTIME = int.TryParse(columns[8], out int temp7) ? temp7 : 0,
+        //                ForcedDiscCalls = int.TryParse(columns[9], out int temp8) ? temp8 : 0,
+        //                ForcedBusyCalls = int.TryParse(columns[10], out int temp9) ? temp9 : 0,
+        //                FlowOut = int.TryParse(columns[11], out int temp10) ? temp10 : 0,
+        //                AvgSpeedAns = double.TryParse(columns[12], out double temp11) ? temp11 : 0,
+        //                AvgACDTime = columns[13],
+        //                AvgACWTime = columns[14],
+        //                AvgAbanTime = columns[15],
+        //                FlowIn = double.TryParse(columns[16], out double temp12) ? temp12 : 0,
+        //                ExtnOutCalls = int.TryParse(columns[17], out int temp13) ? temp13 : 0,
+        //                AvgExtnOutTime = double.TryParse(columns[18], out double temp14) ? temp14 : 0,
+        //                ACDTimePercentage = double.TryParse(columns[19], out double temp15) ? temp15 : 0,
+        //                AnsCallsPercentage = double.TryParse(columns[20], out double temp16) ? temp16 : 0,
+        //                AbandCallsPercentage = double.TryParse(columns[21], out double temp17) ? temp17 : 0,
+        //                AvgPosStaff = double.TryParse(columns[22], out double temp18) ? temp18 : 0,
+        //                CallsPerPos = double.TryParse(columns[23], out double temp19) ? temp19 : 0,
+        //                HeldCalls = int.TryParse(columns[24], out int temp20) ? temp20 : 0,
+        //                HoldTime = columns[25],
+        //                AvgHoldTime = columns[26],
+        //                AHT = columns[27],
+        //                PercentWithinServiceLevel = double.TryParse(columns[28], out double temp21) ? temp21 : 0,
+        //                SL = columns[29]
+        //            };
 
-            //    return summaryList;
-            //}
+        //            summaryList.Add(summary);
+        //        }
+        //    }
 
-           
-     
+        //    return summaryList;
+        //}
+
+
+
     }
 
 
