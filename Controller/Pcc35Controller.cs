@@ -262,20 +262,22 @@ namespace WEBAPI_Bravo.Controller
         public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
         {
             var listTickets = new List<ResolveTicket>();
+            var _strTime = new SqlParameter("@TicketNumber", request.TicketNumber);
+            var _strStatus = new SqlParameter("@Status", request.Status);
+            var _strGenesysNumber = new SqlParameter("@CreatedBy", request.CreatedBy);
+            var _strThreadID = new SqlParameter("@Description", request.Description);
 
 
             try
             {
 
 
-                var _strTime = new SqlParameter("@TicketNumber", request.TicketNumber);
-                var _strGenesysNumber = new SqlParameter("@CreatedBy", request.CreatedBy);
-                var _strThreadID = new SqlParameter("@Description", request.Description);
-
+              
+               
 
                 var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
-                    "EXEC PTM_ResolveTicketSitika @TicketNumber, @CreatedBy, @Description",
-                                              _strTime, _strGenesysNumber, _strThreadID
+                    "EXEC PTM_ResolveTicketSitika @TicketNumber,@Status, @CreatedBy, @Description",
+                                              _strTime,_strStatus, _strGenesysNumber, _strThreadID
 
                 );
 
@@ -288,7 +290,7 @@ namespace WEBAPI_Bravo.Controller
 
 
             //var js = new JavaScriptSerializer();
-            return StatusCode(201, listTickets);
+            return Ok(new { TicketNumber = _strTime, Status = _strStatus,CreatedBy = _strGenesysNumber,Description = _strThreadID });
         }
 
 
@@ -406,6 +408,7 @@ public class ResolveTicket
 {
    
     public string TicketNumber { get; set; }
+    public string Status { get; set; }
     public string CreatedBy { get; set; }
     public string Description { get; set; }
    

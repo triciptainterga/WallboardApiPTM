@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controller\ExecutiveMonitoringController123.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="WEBAPI_Bravo.sln" />
   </ItemGroup>
 
