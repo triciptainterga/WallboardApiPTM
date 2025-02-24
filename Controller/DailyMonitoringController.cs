@@ -18,7 +18,7 @@ namespace WEBAPI_Bravo.Controller
 
     [Route("api/[controller]")]
     [ApiController]
-    public class ExecutiveMonitoringController : ControllerBase
+    public class DailyMonitoringController : ControllerBase
     {
 
 
@@ -28,7 +28,7 @@ namespace WEBAPI_Bravo.Controller
         private readonly string _AvayaconnectionString;
         private readonly string _CrmconnectionString;
 
-        public ExecutiveMonitoringController(sqlContext context, IConfiguration configuration)
+        public DailyMonitoringController(sqlContext context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;

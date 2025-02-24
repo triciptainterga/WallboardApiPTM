@@ -266,6 +266,10 @@ namespace WEBAPI_Bravo.Controller
             var _strStatus = new SqlParameter("@Status", request.Status);
             var _strGenesysNumber = new SqlParameter("@CreatedBy", request.CreatedBy);
             var _strThreadID = new SqlParameter("@Description", request.Description);
+           
+
+
+
 
 
             try
@@ -275,11 +279,12 @@ namespace WEBAPI_Bravo.Controller
               
                
 
-                var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
+                var  result = await _Crmcontext.Database.ExecuteSqlRawAsync(
                     "EXEC PTM_ResolveTicketSitika @TicketNumber,@Status, @CreatedBy, @Description",
                                               _strTime,_strStatus, _strGenesysNumber, _strThreadID
 
                 );
+                return Ok(request);
 
             }
             catch (Exception ex)
@@ -290,7 +295,7 @@ namespace WEBAPI_Bravo.Controller
 
 
             //var js = new JavaScriptSerializer();
-            return Ok(new { TicketNumber = _strTime, Status = _strStatus,CreatedBy = _strGenesysNumber,Description = _strThreadID });
+            
         }
 
 
