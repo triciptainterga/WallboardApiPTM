@@ -760,7 +760,7 @@ namespace WEBAPI_Bravo.Controller
             });
         }
 
-        [HttpGet("GetDataSubCategory1bytop5")]
+      
         [HttpGet("GetDataSubCategory1bytop5")]
         public async Task<IActionResult> GetDataSubCategory1bytop5(string startDate, string endDate, string tenant)
         {

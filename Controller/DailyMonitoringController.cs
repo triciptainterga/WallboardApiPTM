@@ -37,7 +37,58 @@ namespace WEBAPI_Bravo.Controller
         }
 
 
+        [HttpGet("GetDataTickeyByRegion")] 
+        public async Task<ActionResult<object>> GetDataTickeyByRegion(
+             [FromQuery] string startDate,
+             [FromQuery] string endDate,
+             [FromQuery] string Tenant)
+        {
+            var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            object result = null;
 
+            using (SqlConnection conn = new SqlConnection(crmConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("GetDataTickeyByRegion", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    // Add parameters for the stored procedure
+                    cmd.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                    cmd.Parameters.Add(new SqlParameter("@p_enddate", endDate));
+                    cmd.Parameters.Add(new SqlParameter("@Tenant", Tenant));  // New parameter
+                   
+                    conn.Open();
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        List<object> results = new List<object>();
+                        while (await reader.ReadAsync())
+                        {
+                            var row = new
+                            {
+                                Category = reader["CategoryName"].ToString(),
+                                SubCategory = reader["SubCategory1Name"].ToString(),
+                                Jumlah = reader["Jumlah"].ToString(),
+                                More1 = reader["MORE1"].ToString(),
+                                More2 = reader["MORE2"].ToString(),
+                                More3 = reader["MORE3"].ToString(),
+                                More4 = reader["MORE4"].ToString(),
+                                More5 = reader["MORE5"].ToString(),
+                                More6 = reader["MORE6"].ToString(),
+                                More7 = reader["MORE7"].ToString(),
+                                More8 = reader["MORE8"].ToString(),
+                                Other = reader["Other"].ToString()
+
+
+                            };
+                            results.Add(row);
+                        }
+                        result = results;
+                    }
+                }
+            }
+
+            return Ok(result);
+        }
 
         [HttpGet("GetDataInteraction")]
         public async Task<IActionResult> GetDataTotalInteraction(string startDate, string EndDate, string Tenant)
