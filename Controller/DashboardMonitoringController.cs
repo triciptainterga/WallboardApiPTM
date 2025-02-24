@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using System.Runtime.CompilerServices;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using System.Configuration;
 
 namespace WEBAPI_Bravo.Controller
 {
@@ -105,14 +106,42 @@ namespace WEBAPI_Bravo.Controller
             });
         }
 
+        [HttpGet("GetDataDDlCaseOwner")]
+        public async Task<ActionResult<IEnumerable<object>>> GetDataDDlCaseOwner()
+        {
+            var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
 
+            using (SqlConnection conn = new SqlConnection(crmConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("GetDataDDlCaseOwner", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new
+                            {
+                                value = reader["ID"].ToString(),
+                                text = reader["Name"].ToString()
+                            });
+                        }
+                    }
+                }
+            }
+
+            return Ok(result);
+        }
     }
-
-
-
-
-
    
+
+
+
+
+
+
 }
 
 
