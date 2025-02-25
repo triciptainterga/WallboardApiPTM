@@ -39,6 +39,53 @@ namespace WEBAPI_Bravo.Controller
 
 
 
+        [HttpGet("CategoryInteraktionTicketDashboard")]
+        public async Task<ActionResult<IEnumerable<object>>> CategoryInteraktionTicketDetail(string startDate, string EndDate, string Tenant, string Status, string CaseOwner,string categori)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+                {
+                    using (SqlCommand command = new SqlCommand("CategoryInteraktionTicketDashboard", conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                        command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                        command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                        command.Parameters.Add(new SqlParameter("@Status", Status));
+                        command.Parameters.Add(new SqlParameter("@CaseOwner", CaseOwner));
+                        command.Parameters.Add(new SqlParameter("@categori", categori));
+
+                        conn.Open();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+                                    Name = reader["Name"].ToString(),
+                                    Jumlah = reader["Jumlah"].ToString()
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new { message = "Database error occurred", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", error = ex.Message });
+            }
+
+        }
+
 
         [HttpGet("GetDataInteractionDashboard")]
         public async Task<IActionResult> GetDataTotalInteraction(string startDate, string EndDate, string Tenant)
@@ -134,6 +181,270 @@ namespace WEBAPI_Bravo.Controller
 
             return Ok(result);
         }
+
+
+        [HttpGet("TicketOnProgress")]
+        public async Task<ActionResult<IEnumerable<object>>> TicketOnProgress(string startDate, string EndDate, string Tenant, string Status, string CaseOwner, string categori)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+                {
+                    using (SqlCommand command = new SqlCommand("TicketOnProgress", conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                        command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                        command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                        command.Parameters.Add(new SqlParameter("@Status", Status));
+                        command.Parameters.Add(new SqlParameter("@CaseOwner", CaseOwner));
+                        command.Parameters.Add(new SqlParameter("@categori", categori));
+
+                        conn.Open();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+                                    //TicketNumber,
+                                    //SubCategory1Name,
+                                    //SubCategory2Name,
+                                    //VendorName,
+                                    //SLA
+                                    TicketNumber = reader["TicketNumber"].ToString(),
+                                    SubCategory1Name = reader["SubCategory1Name"].ToString(),
+                                    SubCategory2Name = reader["SubCategory2Name"].ToString(),
+                                    VendorName = reader["VendorName"].ToString(),
+                                    SLA = reader["SLA"].ToString(),
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new { message = "Database error occurred", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", error = ex.Message });
+            }
+
+        }
+
+        [HttpGet("GetDataRegionDashboard")]
+        public async Task<ActionResult<IEnumerable<object>>> GetDataRegionDashboard(string startDate, string EndDate, string Tenant, string Status, string CaseOwner, string categori)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+                {
+                    using (SqlCommand command = new SqlCommand("GetDataRegionDashboard", conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                        command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                        command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                        command.Parameters.Add(new SqlParameter("@Status", Status));
+                        command.Parameters.Add(new SqlParameter("@CaseOwner", CaseOwner));
+                        command.Parameters.Add(new SqlParameter("@categori", categori));
+
+                        conn.Open();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+                                   
+                                    Propinsi = reader["Propinsi"].ToString(),
+                                    Closed = reader["Closed"].ToString(),
+                                    OnProgress = reader["OnProgress"].ToString(),
+                                    Total = reader["Total"].ToString(),
+                                   
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new { message = "Database error occurred", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", error = ex.Message });
+            }
+
+        }
+
+        [HttpGet("ChartSlaDashboard")]
+        public async Task<ActionResult<IEnumerable<object>>> ChartSlaDashboard(string startDate, string EndDate, string Tenant, string Status, string CaseOwner, string categori)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+                {
+                    using (SqlCommand command = new SqlCommand("ChartSlaDashboard", conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                        command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                        command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                        command.Parameters.Add(new SqlParameter("@Status", Status));
+                        command.Parameters.Add(new SqlParameter("@CaseOwner", CaseOwner));
+                        command.Parameters.Add(new SqlParameter("@categori", categori));
+
+                        conn.Open();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+
+                                    SLA_1_3_Hari = reader["SLA_1_3_Hari"].ToString(),
+                                    SLA_Perminggu = reader["SLA_Perminggu"].ToString(),
+                                    SLA_Perbuan = reader["SLA_Perbuan"].ToString(),
+                                    SLA_LebihDari1Bulan = reader["SLA_LebihDari1Bulan"].ToString(),
+
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new { message = "Database error occurred", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", error = ex.Message });
+            }
+
+        }
+
+        [HttpGet("SebaranTicketDashboard")]
+        public async Task<ActionResult<IEnumerable<object>>> SebaranTicketDashboard(string startDate, string EndDate, string Tenant, string Status, string CaseOwner, string categori)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+                {
+                    using (SqlCommand command = new SqlCommand("SebaranTicketDashboard", conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                        command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                        command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                        command.Parameters.Add(new SqlParameter("@Status", Status));
+                        command.Parameters.Add(new SqlParameter("@CaseOwner", CaseOwner));
+                        command.Parameters.Add(new SqlParameter("@categori", categori));
+
+                        conn.Open();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+
+                                    VendorName = reader["VendorName"].ToString(),
+                                    SubCategory1Name = reader["SubCategory1Name"].ToString(),
+                                    SubCategory2Name = reader["SubCategory2Name"].ToString(),
+                                    Closed = reader["Closed"].ToString(),
+                                    OnProgress = reader["OnProgress"].ToString(),
+                                    Total = reader["Total"].ToString(),
+
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new { message = "Database error occurred", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", error = ex.Message });
+            }
+
+        }
+
+        [HttpGet("SebaranTicketPerkotaDashboard")]
+        public async Task<ActionResult<IEnumerable<object>>> SebaranTicketPerkotaDashboard(string startDate, string EndDate, string Tenant, string Status, string CaseOwner, string categori)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+                {
+                    using (SqlCommand command = new SqlCommand("SebaranTicketPerkotaDashboard", conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                        command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                        command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                        command.Parameters.Add(new SqlParameter("@Status", Status));
+                        command.Parameters.Add(new SqlParameter("@CaseOwner", CaseOwner));
+                        command.Parameters.Add(new SqlParameter("@categori", categori));
+
+                        conn.Open();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+
+                                    Kota = reader["Kota"].ToString(),
+                                    Jumlah = reader["Jumlah"].ToString(),
+                                    
+
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new { message = "Database error occurred", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", error = ex.Message });
+            }
+
+        }
+
+
+
     }
    
 
