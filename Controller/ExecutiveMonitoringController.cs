@@ -469,6 +469,49 @@ namespace WEBAPI_Bravo.Controller
 
         }
 
+        [HttpGet("Login")]
+        public async Task<ActionResult<IEnumerable<object>>> Login(string UserName, string Password)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+                {
+                    using (SqlCommand command = new SqlCommand("SP_LOGIN_APPLIKASI", conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        var ParameterStart = new SqlParameter("@USER", UserName);
+                        var ParameterEnd = new SqlParameter("@PASSWORD", Password);
+
+                        conn.Open();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+                                    Name = reader["TenantNya"].ToString()
+                                   
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new { message = "Database error occurred", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", error = ex.Message });
+            }
+
+        }
+
 
         [HttpGet("GetDataDDlCategory")] // Endpoint: api/tickets/Top3SubCategory3
         public async Task<ActionResult<IEnumerable<object>>> GetDataDDlCategory()

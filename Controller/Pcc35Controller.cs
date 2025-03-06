@@ -1,15 +1,19 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using WEBAPI_Bravo.Model;
@@ -23,16 +27,37 @@ namespace WEBAPI_Bravo.Controller
         private readonly pcc135Context _context;
         private readonly CrmContext _Crmcontext;
         private readonly IConfiguration _configuration;
+        private readonly IJwtService _jwtService;
 
-        public Pcc35Controller(pcc135Context context, CrmContext Crmcontext, IConfiguration configuration)
+        public Pcc35Controller(pcc135Context context, CrmContext Crmcontext, IConfiguration configuration, IJwtService jwtService)
         {
             _context = context;
             _Crmcontext = Crmcontext;
             _configuration = configuration;
+            _jwtService = jwtService;
 
 
 
         }
+
+        [HttpPost("loginAuth")]
+        public async Task<IActionResult> LoginAuth([FromBody] LoginRequest request)
+        {
+            if (request == null || string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
+            {
+                return BadRequest(new { Message = "Username and password are required." });
+            }
+
+            // Simulasi validasi user dari database
+            if (request.Username == "admin" && request.Password == "password123")
+            {
+                var token = _jwtService.GenerateToken(request.Username);
+                return Ok(new { Token = token });
+            }
+
+            return Unauthorized(new { Message = "Invalid username or password" });
+        }
+
 
         [HttpPost]
         [Route("createTicket")]
@@ -157,6 +182,10 @@ namespace WEBAPI_Bravo.Controller
             }
         }
 
+
+      
+     
+
         [HttpGet]
         [Route("GetTicketDetail")]
         public async Task<IActionResult> GetTicketDetail([FromQuery] string ticket_id)
@@ -175,8 +204,8 @@ namespace WEBAPI_Bravo.Controller
                 client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
 
                 // Create the query parameters entity using the inputs directly from the URL
-            
-                var requestUri = $"{apiSettings.UrlTicketList}" +ticket_id;
+
+                var requestUri = $"{apiSettings.UrlTicketList}" + ticket_id;
 
                 try
                 {
@@ -258,45 +287,108 @@ namespace WEBAPI_Bravo.Controller
             }
         }
 
+
+
+
+        
+
+        //[HttpPost("loginAuth")]
+        //public IActionResult loginAuth([FromBody] LoginRequest request)
+        //{
+        //    if (request.Username != "admin" || request.Password != "password123")
+        //    {
+        //        return Unauthorized(new { Message = "Invalid username or password" });
+        //    }
+
+        //    var tokenHandler = new JwtSecurityTokenHandler();
+        //    var key = Encoding.ASCII.GetBytes(SecretKey);
+        //    var tokenDescriptor = new SecurityTokenDescriptor
+        //    {
+        //        Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, request.Username) }),
+        //        Expires = DateTime.UtcNow.AddHours(1),
+        //        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        //    };
+        //    var token = tokenHandler.CreateToken(tokenDescriptor);
+        //    var tokenString = tokenHandler.WriteToken(token);
+
+        //    return Ok(new { Token = tokenString });
+        //}
+
+
+        [Authorize] 
         [HttpPost("UpdateTicket")]
         public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
         {
-            var listTickets = new List<ResolveTicket>();
-            var _strTime = new SqlParameter("@TicketNumber", request.TicketNumber);
-            var _strStatus = new SqlParameter("@Status", request.Status);
-            var _strGenesysNumber = new SqlParameter("@CreatedBy", request.CreatedBy);
-            var _strThreadID = new SqlParameter("@Description", request.Description);
-           
+            if (request == null)
+            {
+                return BadRequest("Invalid request");
+            }
 
+            string base64Files = request.Files?.Where(f => !string.IsNullOrEmpty(f)).Any() == true
+                ? string.Join(",", request.Files.Where(f => !string.IsNullOrEmpty(f)))
+                : "";
 
-
-
+            var _strTime = new SqlParameter("@TicketNumber", request.TicketId);
+            var _strStatus = new SqlParameter("@Status", request.StatusName);
+            var _strGenesysNumber = new SqlParameter("@Feedback", request.Feedback);
+            var _strThreadID = new SqlParameter("@Files", base64Files);
 
             try
             {
-
-
-              
-               
-
-                var  result = await _Crmcontext.Database.ExecuteSqlRawAsync(
-                    "EXEC PTM_ResolveTicketSitika @TicketNumber,@Status, @CreatedBy, @Description",
-                                              _strTime,_strStatus, _strGenesysNumber, _strThreadID
-
+                var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
+                    "EXEC PTM_ResolveTicketSitika @TicketNumber, @Status, @Feedback, @Files",
+                    _strTime, _strStatus, _strGenesysNumber, _strThreadID
                 );
-                return Ok(request);
 
+                return Ok(new { Message = "Ticket updated successfully", data = request });
             }
             catch (Exception ex)
             {
-                return StatusCode(400, ex.ToString());
-
+                return StatusCode(500, new { Message = "Error updating ticket", Error = ex.Message });
             }
-
-
-            //var js = new JavaScriptSerializer();
-            
         }
+        //[HttpPost("UpdateTicket")]
+        //public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
+
+
+
+        //{
+
+        //    // string base64Files = string.Join(",", request.Files);
+
+        //    string base64Files = request.Files?.Where(f => !string.IsNullOrEmpty(f)).Any() == true
+        //    ? string.Join(",", request.Files.Where(f => !string.IsNullOrEmpty(f)))
+        //        : "";
+        //    var listTickets = new List<ResolveTicket>();
+        //    var _strTime = new SqlParameter("@TicketNumber", request.TicketId);
+        //    var _strStatus = new SqlParameter("@Status", request.StatusName);
+        //    var _strGenesysNumber = new SqlParameter("@Feedback", request.Feedback);
+        //    var _strThreadID = new SqlParameter("@Files", base64Files);
+
+
+
+        //    try
+        //    {
+
+        //        var  result = await _Crmcontext.Database.ExecuteSqlRawAsync(
+        //            "EXEC PTM_ResolveTicketSitika @TicketNumber,@Status, @Feedback, @Files",
+        //                                      _strTime,_strStatus, _strGenesysNumber, _strThreadID
+
+        //        );
+
+        //        return Ok(new { Message = "Ticket updated successfully", data = request });
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(400, ex.ToString());
+
+        //    }
+
+
+        //    //var js = new JavaScriptSerializer();
+
+        //}
 
 
         [HttpGet]
@@ -383,7 +475,12 @@ namespace WEBAPI_Bravo.Controller
      .ToListAsync();
             return Ok(result);
         }
+
+
+      
     }
+
+
 }
 
 
@@ -412,11 +509,16 @@ public class TaskDisplayDto
 public class ResolveTicket
 {
    
-    public string TicketNumber { get; set; }
-    public string Status { get; set; }
-    public string CreatedBy { get; set; }
-    public string Description { get; set; }
-   
+    //public string TicketNumber { get; set; }
+    //public string Status { get; set; }
+    //public string CreatedBy { get; set; }
+    //public string Description { get; set; }
+
+    public string TicketId { get; set; }
+    public string StatusName { get; set; }
+    public string Feedback { get; set; }
+    public List<string> Files { get; set; }
+
 }
 public class ApiSettings
 {
@@ -494,4 +596,9 @@ public class TicketData
     public int? LastSlaStatus { get; set; }
     public string TicketDescription { get; set; }
     public bool IsRead { get; set; }
+}
+public class LoginRequest
+{
+    public string Username { get; set; }
+    public string Password { get; set; }
 }
