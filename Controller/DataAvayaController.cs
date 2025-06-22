@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using WEBAPI_Bravo.Model;
+using WEBAPI_Bravo.Services;
 
 namespace WEBAPI_Bravo.Controller
 {
@@ -20,73 +21,211 @@ namespace WEBAPI_Bravo.Controller
     public class DataAvayaController : ControllerBase
     {
         private readonly pcc135Context _context;
+        private readonly iDetailServices _detailServices;
 
-        public DataAvayaController(pcc135Context context)
+        public DataAvayaController(pcc135Context context, iDetailServices DetailServices)
         {
             _context = context;
+            _detailServices = DetailServices;
 
 
         }
-
-        [HttpGet("NewSummaryDaily")]
-
-        public IActionResult NewSummaryDaily()
+        [HttpGet("ReportAIO_VoiceWB")]
+        public async Task<IActionResult> GetData(string Tenant)
         {
             string localDirectory = @"E:\DataAvaya";
-            string filePath = Path.Combine(localDirectory, "Summary_Daily.txt");
-            NewSummaryDaily? totalsData = null;
-            List<NewSummaryDaily> parsedDataRows = new List<NewSummaryDaily>();
+            string NameFile = "ReportAIO_VoiceAll.txt";
 
-            try
+            //if (Tenant.Trim() == "PCC 135 Abdul Muis")
+            //    NameFile = "ReportAIO_VoiceWB_Abdul_Muis.txt";
+            //else if (Tenant.Trim() == "Shared Service")
+            //    NameFile = "ReportAIO_VoiceWB_SS.txt";
+            //else if (Tenant.Trim() == "PCC 135 Patra Niaga")
+            //    NameFile = "ReportAIO_VoiceWB.txt";table
+            //else 
+            //    NameFile = "ReportAIO_VoiceAll.txt";
+
+
+
+
+
+            string FilePath = Path.Combine(localDirectory, NameFile);
+            if (!System.IO.File.Exists(FilePath))
             {
-                if (!System.IO.File.Exists(filePath))
-                {
-                    return NotFound("File not found.");
-                }
-
-                List<string> data = System.IO.File.ReadAllLines(filePath).ToList();
-
-                // Extract the header row
-                var headerRow = data.FirstOrDefault(row => row.StartsWith("Date;"));
-
-                // Extract data rows starting from "Totals"
-                var dataRows = data.SkipWhile(row => !row.StartsWith("Totals")).ToList();
-
-                if (dataRows.Any())
-                {
-                    var totalsRow = dataRows.FirstOrDefault(row => row.StartsWith("Totals"));
-
-                    if (totalsRow != null)
-                    {
-                        totalsData = ParseData(totalsRow);
-
-                        // Parse all data rows excluding "Totals"
-                        foreach (var row in dataRows.Skip(1)) // Skip "Totals"
-                        {
-                            var parsedRow = ParseData(row);
-                            if (parsedRow != null)
-                            {
-                                parsedDataRows.Add(parsedRow);
-                            }
-                        }
-
-                        return Ok(new
-                        {
-                            Header = headerRow,
-                            TotalsRow = totalsData,
-                            DataRows = parsedDataRows // Now structured as a list of objects
-                        });
-                    }
-                }
-
-                Console.WriteLine("Totals row not found.");
-                return Ok(new { Header = headerRow, TotalsRow = (string?)null, DataRows = parsedDataRows });
+                return NotFound("File not found.");
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "An error occurred", Error = ex.ToString() });
-            }
+
+            var data = await _detailServices.ReadDataCallFromFile(FilePath);
+            return Ok(data);
         }
+        [HttpGet("detail-data")]
+        public IActionResult GetDetailData123()
+        {
+
+            string localDirectory = @"E:\DataAvaya";
+
+            string FilePath = Path.Combine(localDirectory, "DataIdle_All.txt");
+            if (!System.IO.File.Exists(FilePath))
+            {
+                return NotFound("File not found.");
+            }
+
+            var data = _detailServices.ReadDataFromTxt(FilePath);
+            return Ok(data);
+        }
+
+        [HttpGet("ReportTodayWB")]
+        public async Task<IActionResult> ReportTodayWB(string Tenant)
+        {
+
+            string localDirectory = @"E:\DataAvaya";
+            string NameFile = "VOICE_TODAY_ALL.txt";
+
+            //if (Tenant.Trim() == "PCC 135 Abdul Muis")
+            //    NameFile = "VOICE_TODAY_ABDUL_MUIS.txt";
+            //else if (Tenant.Trim() == "Shared Service")
+            //    NameFile = "VOICE_TODAY_SS.txt";
+            //else if (Tenant.Trim() == "PCC 135 Patra Niaga")
+            //    NameFile = "VOICE_TODAY_C&T.txt";
+            //else
+            //    NameFile = "VOICE_TODAY_ALL.txt";
+
+            string FilePath = Path.Combine(localDirectory, NameFile);
+            if (!System.IO.File.Exists(FilePath))
+            {
+                return NotFound("File not found.");
+            }
+
+            var data = await _detailServices.ReadDataTodayFromFile(FilePath);
+            return Ok(data);
+        }
+
+
+
+
+        //public CallCenterData ReadDataFromTxt(string filePath)
+        //{
+        //    var lines = System.IO.File.ReadAllLines(filePath);
+        //    var data = new CallCenterData();
+        //    var agents = new List<AgentData>();
+
+        //    foreach (var line in lines)
+        //    {
+        //        var parts = line.Split(';');
+
+        //        if (parts[0].StartsWith("Split/Skill:"))
+        //        {
+        //            data.SplitSkill = parts[1];
+        //            data.SkillState = parts[3];
+        //        }
+        //        else if (parts[0].StartsWith("Calls Waiting:"))
+        //        {
+        //            data.CallsWaiting = int.Parse(parts[1]);
+        //            data.AgentsStaffed = int.Parse(parts[3]);
+        //        }
+        //        else if (parts[0].StartsWith("Oldest Call Waiting:"))
+        //        {
+        //            data.OldestCallWaiting = parts[1];
+        //            data.AgentsAvailable = int.Parse(parts[3]);
+        //        }
+        //        else if (parts[0].StartsWith("Service Level:"))
+        //        {
+        //            data.ServiceLevel = int.Parse(parts[1]);
+        //        }
+        //        else if (parts[0] == "")
+        //        {
+        //            // Mengabaikan header tabel agen
+        //            continue;
+        //        }
+        //        else
+        //        {
+        //            // Parsing data agent
+        //            if (parts.Length >= 12)
+        //            {
+        //                var agent = new AgentData
+        //                {
+        //                    AgentName = parts[1],
+        //                    LoginID = parts[2],
+        //                    Extension = parts[3],
+        //                    Role = parts[4],
+        //                    Percent = int.Parse(parts[5]),
+        //                    AUXReason = parts[6],
+        //                    State = parts[7],
+        //                    Direction = parts[8],
+        //                    SplitSkill = parts[9],
+        //                    Level = int.Parse(parts[10]),
+        //                    Time = parts[11],
+        //                    VDNName = parts.Length > 12 ? parts[12] : ""
+        //                };
+
+        //                agents.Add(agent);
+        //            }
+        //        }
+        //    }
+
+        //    data.Agents = agents;
+        //    return data;
+        //}
+
+        //[HttpGet("NewSummaryDaily")]
+
+        //public IActionResult NewSummaryDaily()
+        //{
+        //    string localDirectory = @"E:\DataAvaya";
+        //    string filePath = Path.Combine(localDirectory, "Summary_Daily.txt");
+        //    NewSummaryDaily? totalsData = null;
+        //    List<NewSummaryDaily> parsedDataRows = new List<NewSummaryDaily>();
+
+        //    try
+        //    {
+        //        if (!System.IO.File.Exists(filePath))
+        //        {
+        //            return NotFound("File not found.");
+        //        }
+
+        //        List<string> data = System.IO.File.ReadAllLines(filePath).ToList();
+
+        //        // Extract the header row
+        //        var headerRow = data.FirstOrDefault(row => row.StartsWith("Date;"));
+
+        //        // Extract data rows starting from "Totals"
+        //        var dataRows = data.SkipWhile(row => !row.StartsWith("Totals")).ToList();
+
+        //        if (dataRows.Any())
+        //        {
+        //            var totalsRow = dataRows.FirstOrDefault(row => row.StartsWith("Totals"));
+
+        //            if (totalsRow != null)
+        //            {
+        //                totalsData = ParseData(totalsRow);
+
+        //                // Parse all data rows excluding "Totals"
+        //                foreach (var row in dataRows.Skip(1)) // Skip "Totals"
+        //                {
+        //                    var parsedRow = ParseData(row);
+        //                    if (parsedRow != null)
+        //                    {
+        //                        parsedDataRows.Add(parsedRow);
+        //                    }
+        //                }
+
+        //                return Ok(new
+        //                {
+        //                    Header = headerRow,
+        //                    TotalsRow = totalsData,
+        //                    DataRows = parsedDataRows // Now structured as a list of objects
+        //                });
+        //            }
+        //        }
+
+        //        Console.WriteLine("Totals row not found.");
+        //        return Ok(new { Header = headerRow, TotalsRow = (string?)null, DataRows = parsedDataRows });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { Message = "An error occurred", Error = ex.ToString() });
+        //    }
+        //}
 
 
 
@@ -821,6 +960,43 @@ public class StateData
     public string Skill1 { get; set; }
     public string Skill2 { get; set; }
     public string Skill3 { get; set; }
+}
+
+public class CallCenterData
+{
+    public string SplitSkill { get; set; }
+    public string SkillState { get; set; }
+    public int CallsWaiting { get; set; }
+    public int AgentsStaffed { get; set; }
+    public string OldestCallWaiting { get; set; }
+    public int AgentsAvailable { get; set; }
+    public int DirectAgentCallsWaiting { get; set; }
+    public int AgentsRinging { get; set; }
+    public int PercentWithinServiceLevel { get; set; }
+    public int AgentsInACW { get; set; }
+    public int ServiceLevel { get; set; }
+    public int AgentsOnACDCalls { get; set; }
+    public int ACDCalls { get; set; }
+    public int AgentsInAUX { get; set; }
+    public int AbandonedCalls { get; set; }
+    public int AgentsInOther { get; set; }
+    public List<AgentData> Agents { get; set; }
+}
+
+public class AgentData
+{
+    public string AgentName { get; set; }
+    public string LoginID { get; set; }
+    public string Extension { get; set; }
+    public string Role { get; set; }
+    public string Percent { get; set; }
+    public string AUXReason { get; set; }
+    public string State { get; set; }
+    public string Direction { get; set; }
+    public string SplitSkill { get; set; }
+    public string Level { get; set; }
+    public string Time { get; set; }
+    public string VDNName { get; set; }
 }
 
 

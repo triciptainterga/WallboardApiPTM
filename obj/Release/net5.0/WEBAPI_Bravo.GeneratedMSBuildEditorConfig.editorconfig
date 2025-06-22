@@ -8,6 +8,6 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = WEBAPI_Bravo
-build_property.ProjectDir = E:\ApiPertaminaWallboard\WallboardPtm\
+build_property.ProjectDir = E:\ApiWbPtm2025\WallboardApiPTM\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 

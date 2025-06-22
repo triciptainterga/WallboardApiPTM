@@ -1,18 +1,62 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "E:\\ApiPertaminaWallboard\\WallboardPtm\\",
+  "WorkspaceRootPath": "E:\\ApiWbPtm2025\\WallboardApiPTM\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apipertaminawallboard\\wallboardptm\\controller\\pcc35controller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\controller\\pcc35controller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:controller\\pcc35controller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apipertaminawallboard\\wallboardptm\\controller\\dataavayacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\model\\pcc135context.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:model\\pcc135context.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\startup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:startup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\controller\\tenantcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:controller\\tenantcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\controller\\on4controller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:controller\\on4controller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\controller\\dashboardmonitoringcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:controller\\dashboardmonitoringcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\model\\on4context.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:model\\on4context.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\controller\\executivemonitoringcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:controller\\executivemonitoringcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\controller\\wallboadcustomecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:controller\\wallboadcustomecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\controller\\dataavayacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:controller\\dataavayacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apipertaminawallboard\\wallboardptm\\controller\\wallboadcustomecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:controller\\wallboadcustomecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\controller\\dailymonitoringcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:controller\\dailymonitoringcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\services\\detailservices.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:services\\detailservices.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|e:\\apiwbptm2025\\wallboardapiptm\\services\\idetailservices.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{8C9C6276-F164-49FA-B6D0-5F1CF958FE80}|WEBAPI_Bravo.csproj|solutionrelative:services\\idetailservices.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,44 +66,183 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 6,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "TenantController.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\TenantController.cs",
+              "RelativeDocumentMoniker": "Controller\\TenantController.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\TenantController.cs",
+              "RelativeToolTip": "Controller\\TenantController.cs",
+              "ViewState": "AgIAAB8AAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-28T19:20:25.176Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "On4Controller.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\On4Controller.cs",
+              "RelativeDocumentMoniker": "Controller\\On4Controller.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\On4Controller.cs",
+              "RelativeToolTip": "Controller\\On4Controller.cs",
+              "ViewState": "AgIAACgAAAAAAAAAAAAgwCYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-23T01:28:29.261Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "On4Context.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Model\\On4Context.cs",
+              "RelativeDocumentMoniker": "Model\\On4Context.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Model\\On4Context.cs",
+              "RelativeToolTip": "Model\\On4Context.cs",
+              "ViewState": "AgIAADsAAAAAAAAAAAAzwLcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-15T02:55:21.351Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "pcc135Context.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Model\\pcc135Context.cs",
+              "RelativeDocumentMoniker": "Model\\pcc135Context.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Model\\pcc135Context.cs",
+              "RelativeToolTip": "Model\\pcc135Context.cs",
+              "ViewState": "AgIAADEAAAAAAAAAAAAqwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-15T02:22:25.436Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "DailyMonitoringController.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\DailyMonitoringController.cs",
+              "RelativeDocumentMoniker": "Controller\\DailyMonitoringController.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\DailyMonitoringController.cs",
+              "RelativeToolTip": "Controller\\DailyMonitoringController.cs",
+              "ViewState": "AgIAACQAAAAAAAAAAAAmwCYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-07T17:41:10.225Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\appsettings.json",
+              "RelativeDocumentMoniker": "appsettings.json",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\appsettings.json",
+              "RelativeToolTip": "appsettings.json",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAAABUAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-03-16T22:40:39.423Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Pcc35Controller.cs",
-              "DocumentMoniker": "E:\\ApiPertaminaWallboard\\WallboardPtm\\Controller\\Pcc35Controller.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\Pcc35Controller.cs",
               "RelativeDocumentMoniker": "Controller\\Pcc35Controller.cs",
-              "ToolTip": "E:\\ApiPertaminaWallboard\\WallboardPtm\\Controller\\Pcc35Controller.cs",
-              "RelativeToolTip": "Controller\\Pcc35Controller.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\Pcc35Controller.cs*",
+              "RelativeToolTip": "Controller\\Pcc35Controller.cs*",
+              "ViewState": "AgIAALsBAAAAAAAAAAAqwNEBAABYAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-02-17T12:04:40.929Z",
+              "WhenOpened": "2025-03-16T17:03:16.977Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "ExecutiveMonitoringController.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\ExecutiveMonitoringController.cs",
+              "RelativeDocumentMoniker": "Controller\\ExecutiveMonitoringController.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\ExecutiveMonitoringController.cs",
+              "RelativeToolTip": "Controller\\ExecutiveMonitoringController.cs",
+              "ViewState": "AgIAAKkEAAAAAAAAAAAhwL0EAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-14T19:23:24.661Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "DashboardMonitoringController.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\DashboardMonitoringController.cs",
+              "RelativeDocumentMoniker": "Controller\\DashboardMonitoringController.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\DashboardMonitoringController.cs",
+              "RelativeToolTip": "Controller\\DashboardMonitoringController.cs",
+              "ViewState": "AgIAAMgAAAAAAAAAAAAIwOQAAABYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-14T19:23:18.727Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "WallboadCustomeController.cs",
-              "DocumentMoniker": "E:\\ApiPertaminaWallboard\\WallboardPtm\\Controller\\WallboadCustomeController.cs",
-              "RelativeDocumentMoniker": "Controller\\WallboadCustomeController.cs",
-              "ToolTip": "E:\\ApiPertaminaWallboard\\WallboardPtm\\Controller\\WallboadCustomeController.cs",
-              "RelativeToolTip": "Controller\\WallboadCustomeController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Title": "Startup.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Startup.cs",
+              "RelativeDocumentMoniker": "Startup.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Startup.cs",
+              "RelativeToolTip": "Startup.cs",
+              "ViewState": "AgIAAIsAAAAAAAAAAAAowK0AAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-02-17T12:04:37.39Z"
+              "WhenOpened": "2025-03-12T21:07:46.31Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "DataAvayaController.cs",
-              "DocumentMoniker": "E:\\ApiPertaminaWallboard\\WallboardPtm\\Controller\\DataAvayaController.cs",
-              "RelativeDocumentMoniker": "Controller\\DataAvayaController.cs",
-              "ToolTip": "E:\\ApiPertaminaWallboard\\WallboardPtm\\Controller\\DataAvayaController.cs",
-              "RelativeToolTip": "Controller\\DataAvayaController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 9,
+              "Title": "WallboadCustomeController.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\WallboadCustomeController.cs",
+              "RelativeDocumentMoniker": "Controller\\WallboadCustomeController.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\WallboadCustomeController.cs",
+              "RelativeToolTip": "Controller\\WallboadCustomeController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-02-17T12:03:41.069Z"
+              "WhenOpened": "2025-03-12T19:50:33.045Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "DataAvayaController.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\DataAvayaController.cs",
+              "RelativeDocumentMoniker": "Controller\\DataAvayaController.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Controller\\DataAvayaController.cs",
+              "RelativeToolTip": "Controller\\DataAvayaController.cs",
+              "ViewState": "AgIAALUDAAAAAAAAAAAxwNMDAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-12T16:14:38.082Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "IDetailServices.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Services\\IDetailServices.cs",
+              "RelativeDocumentMoniker": "Services\\IDetailServices.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Services\\IDetailServices.cs",
+              "RelativeToolTip": "Services\\IDetailServices.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-12T16:14:16.503Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "DetailServices.cs",
+              "DocumentMoniker": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Services\\DetailServices.cs",
+              "RelativeDocumentMoniker": "Services\\DetailServices.cs",
+              "ToolTip": "E:\\ApiWbPtm2025\\WallboardApiPTM\\Services\\DetailServices.cs",
+              "RelativeToolTip": "Services\\DetailServices.cs",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAqwDAAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-12T15:46:03.825Z",
+              "EditorCaption": ""
             }
           ]
         }

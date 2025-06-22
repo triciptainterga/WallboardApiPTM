@@ -11,11 +11,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using System.Runtime.CompilerServices;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using MySqlX.XDevAPI.Common;
+using System.Net;
+
 
 namespace WEBAPI_Bravo.Controller
 {
-   
 
+    
         [Route("api/[controller]")]
         [ApiController]
         public class ExecutiveMonitoringController : ControllerBase
@@ -40,70 +43,50 @@ namespace WEBAPI_Bravo.Controller
 
 
         [HttpGet("GetDataInteraction")]
-        public async Task<IActionResult> GetDataTotalInteraction(string startDate, string EndDate,string Tenant)
+        public async Task<ActionResult<IEnumerable<object>>> GetDataInteraction(string startDate, string EndDate, string Tenant)
         {
-            var avayaConnectionString = _configuration.GetConnectionString("AvayaConnection");
-            var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
             var ocmConnectionString = _configuration.GetConnectionString("DefaultConnection2");
-
-            int totalVoice = 0;
-            int totalEmail = 0;
-            int totalMultichat = 0;
+            var result = new List<object>();
 
             try
             {
-                async Task<int> GetDataAsync(string connectionString, string procedureName, string startDateParam, string endDateParam, string TenantParam)
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
                 {
-                    using (var connection = new SqlConnection(connectionString))
+                    using (SqlCommand command = new SqlCommand("GetDataMultichat", conn))
                     {
-                        await connection.OpenAsync();
-                        using (var command = connection.CreateCommand())
-                        {
-                            command.CommandText = procedureName;
-                            command.CommandType = CommandType.StoredProcedure;
-                            command.Parameters.Add(new SqlParameter(startDateParam, startDate));
-                            command.Parameters.Add(new SqlParameter(endDateParam, EndDate));
-                            command.Parameters.Add(new SqlParameter(TenantParam, Tenant));
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                        command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                        command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
 
-                            var result = await command.ExecuteScalarAsync();
-                            return result != DBNull.Value ? Convert.ToInt32(result) : 0;
+                        await conn.OpenAsync();
+
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync()) // Gunakan ReadAsync untuk async operation
+                            {
+                                result.Add(new
+                                {
+                                    Name = reader["Name"].ToString(),
+                                    Jumlah = reader["Jumlah"].ToString()
+                                });
+                            }
                         }
-                      
                     }
                 }
 
-                // Run database queries concurrently
-                var taskMultichat = GetDataAsync(ocmConnectionString, "GetDataMultichat", "@p_startdate", "@p_enddate","@Tenant");
-                var taskVoice = GetDataAsync(avayaConnectionString, "GetDataVoice", "@StartDate", "@EndDate", "@Tenant");
-                var taskEmail = GetDataAsync(ocmConnectionString, "GetDataEmail", "@p_startdate", "@p_enddate", "@Tenant");
-               
-
-                var results = await Task.WhenAll(taskVoice, taskEmail,taskMultichat);
-
-                // Assign results
-                totalVoice = results[0];
-                totalEmail = results[1];
-                totalMultichat = results[2];
-
+                return Ok(result);
             }
-            catch (SqlException sqlEx)
+            catch (SqlException ex)
             {
-                return StatusCode(500, new { message = $"SQL Error: {sqlEx.Message}" });
+                return StatusCode(500, new { message = "Database error occurred.", error = ex.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"General Error: {ex.Message}" });
+                return StatusCode(500, new { message = "An unexpected error occurred.", error = ex.Message });
             }
-
-            // Return response in a structured format
-            return Ok(new
-            {
-                TotalVoice = totalVoice,
-                TotalEmail = totalEmail,
-                TotalMultichat = totalMultichat,
-                GrandTotal = totalVoice + totalEmail + totalMultichat
-            });
         }
+
 
         [HttpGet("GetDataAnswer")]
         public async Task<IActionResult> GetDataAnswer(string startDate, string EndDate, string Tenant)
@@ -140,16 +123,14 @@ namespace WEBAPI_Bravo.Controller
 
                 // Run database queries concurrently
                 var taskMultichat = GetDataAsync(ocmConnectionString, "GetDataMultichatAns", "@p_startdate", "@p_enddate", "@Tenant");
-                var taskVoice = GetDataAsync(avayaConnectionString, "GetDataVoiceAns", "@StartDate", "@EndDate", "@Tenant");
                 var taskEmail = GetDataAsync(ocmConnectionString, "GetDataEmailAns", "@p_startdate", "@p_enddate", "@Tenant");
 
 
-                var results = await Task.WhenAll(taskVoice, taskEmail, taskMultichat);
+                var results = await Task.WhenAll( taskEmail, taskMultichat);
 
                 // Assign results
-                totalVoice = results[0];
-                totalEmail = results[1];
-                totalMultichat = results[2];
+                totalEmail = results[0];
+                totalMultichat = results[1];
 
             }
             catch (SqlException sqlEx)
@@ -164,10 +145,9 @@ namespace WEBAPI_Bravo.Controller
             // Return response in a structured format
             return Ok(new
             {
-                TotalVoice = totalVoice,
                 TotalEmail = totalEmail,
                 TotalMultichat = totalMultichat,
-                GrandTotal = totalVoice + totalEmail + totalMultichat
+                GrandTotal =   totalEmail + totalMultichat
             });
         }
 
@@ -205,8 +185,106 @@ namespace WEBAPI_Bravo.Controller
 
             return Ok(result);
         }
+        [HttpGet("CategoryInteraktionTicketDaily")] 
+        public async Task<ActionResult<IEnumerable<object>>> CategoryInteraktionTicketDaily(string startDate, string EndDate, string Tenant)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CrmConnection");
+            var result = new List<object>();
+
+            using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+            {
+                using (SqlCommand command = new SqlCommand("CategoryInteraktionTicketDaily", conn))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                    command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                    command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                   // command.Parameters.Add(new SqlParameter("@region", region));
+
+                    conn.Open();
+                    using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new
+                            {
+                                Name = reader["Name"].ToString(),
+                                Jumlah = reader["Jumlah"].ToString()
+                            });
+                        }
+                    }
+                }
+            }
+
+            return Ok(result);
+        }  
+        [HttpGet("CategoryInteraktionTicketByRegion")] 
+        public async Task<ActionResult<IEnumerable<object>>> CategoryInteraktionTicketByRegion(string startDate, string EndDate, string Tenant,string region)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CrmConnection");
+            var result = new List<object>();
+
+            using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+            {
+                using (SqlCommand command = new SqlCommand("CategoryInteraktionTicketByRegion", conn))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                    command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                    command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                    command.Parameters.Add(new SqlParameter("@region", region));
+
+                    conn.Open();
+                    using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new
+                            {
+                                Name = reader["Name"].ToString(),
+                                Jumlah = reader["Jumlah"].ToString()
+                            });
+                        }
+                    }
+                }
+            }
+
+            return Ok(result);
+        } 
+        [HttpGet("GetChannelInteraktionDetail")] 
+        public async Task<ActionResult<IEnumerable<object>>> GetChannelInteraktionDetail(string startDate, string EndDate, string Tenant)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("DefaultConnection2");
+            var result = new List<object>();
+
+            using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+            {
+                using (SqlCommand command = new SqlCommand("GetChannelInteraktionDetail", conn))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                    command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                    command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+
+                    conn.Open();
+                    using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new
+                            {
+                                Name = reader["Name"].ToString(),
+                                Jumlah = reader["Jumlah"].ToString()
+                            });
+                        }
+                    }
+                }
+            }
+
+            return Ok(result);
+        }
         [HttpGet("CategoriInteraktion")]
-        public async Task<ActionResult<IEnumerable<object>>> CategoriInteraktion(string startDate, string EndDate, string Tenant)
+        public async Task<ActionResult<IEnumerable<object>>> CategoriInteraktion(string startDate, string EndDate, string Tenant,string region)
         {
             var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
             var result = new List<object>();
@@ -221,6 +299,51 @@ namespace WEBAPI_Bravo.Controller
                         command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
                         command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
                         command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                        command.Parameters.Add(new SqlParameter("@params", region));
+
+                        conn.Open();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+                                    Name = reader["Name"].ToString(),
+                                    Jumlah = reader["Jumlah"].ToString()
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new { message = "Database error occurred", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", error = ex.Message });
+            }
+
+        }
+        [HttpGet("CategoriInteraktionDetail")]
+        public async Task<ActionResult<IEnumerable<object>>> CategoriInteraktionDetail(string startDate, string EndDate, string Tenant,string Params)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+                {
+                    using (SqlCommand command = new SqlCommand("CategoriInteraktionDetail", conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                        command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                        command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                        command.Parameters.Add(new SqlParameter("@params", Params));
 
                         conn.Open();
                         using (SqlDataReader reader = await command.ExecuteReaderAsync())
@@ -250,7 +373,7 @@ namespace WEBAPI_Bravo.Controller
         }
 
         [HttpGet("Top5CategoryInteraktion")]
-        public async Task<ActionResult<IEnumerable<object>>> Top5CategoryInteraktion(string startDate, string EndDate, string Tenant)
+        public async Task<ActionResult<IEnumerable<object>>> Top5CategoryInteraktion(string startDate, string EndDate, string Tenant,string region )
         {
             var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
             var result = new List<object>();
@@ -265,6 +388,7 @@ namespace WEBAPI_Bravo.Controller
                         command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
                         command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
                         command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                        command.Parameters.Add(new SqlParameter("@region", region));
 
                         conn.Open();
                         using (SqlDataReader reader = await command.ExecuteReaderAsync())
@@ -276,6 +400,94 @@ namespace WEBAPI_Bravo.Controller
                                     Category = reader["Category"].ToString(),
                                     Name = reader["Name"].ToString(),
                                     Jumlah = reader["Percentage"].ToString()
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new { message = "Database error occurred", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", error = ex.Message });
+            }
+
+        }
+
+        [HttpGet("Top10DailyReportInteraction")]
+        public async Task<ActionResult<IEnumerable<object>>> Top10DailyReportInteraction(string startDate, string EndDate, string Tenant)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+                {
+                    using (SqlCommand command = new SqlCommand("Top10DailyReportInteraction", conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                        command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                        command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                      
+                        conn.Open();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+                                    Type = reader["type"].ToString(),
+                                    Name = reader["Name"].ToString(),
+                                    Jumlah = reader["Jumlah"].ToString()
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new { message = "Database error occurred", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", error = ex.Message });
+            }
+
+        }
+        [HttpGet("CountDailyReportInteraction")]
+        public async Task<ActionResult<IEnumerable<object>>> CountDailyReportInteraction(string startDate, string EndDate, string Tenant)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+                {
+                    using (SqlCommand command = new SqlCommand("CountDailyReportInteraction", conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
+                        command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
+                        command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                      
+                        conn.Open();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+                                    Name = reader["Name"].ToString(),
+                                    Jumlah = reader["jumlah"].ToString()
                                 });
                             }
                         }
@@ -294,7 +506,7 @@ namespace WEBAPI_Bravo.Controller
 
         }
         [HttpGet("Top5CategoryInteraktionDetail")]
-        public async Task<ActionResult<IEnumerable<object>>> Top5CategoryInteraktionDetail(string startDate, string EndDate, string Tenant,string Channel)
+        public async Task<ActionResult<IEnumerable<object>>> Top5CategoryInteraktionDetail(string startDate, string EndDate, string Tenant, string Params)
         {
             var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
             var result = new List<object>();
@@ -309,7 +521,7 @@ namespace WEBAPI_Bravo.Controller
                         command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
                         command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
                         command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
-                        command.Parameters.Add(new SqlParameter("@Channel", Channel));
+                        command.Parameters.Add(new SqlParameter("@params", Params));
 
                         conn.Open();
                         using (SqlDataReader reader = await command.ExecuteReaderAsync())
@@ -338,6 +550,109 @@ namespace WEBAPI_Bravo.Controller
             }
 
         }
+
+        //[HttpGet("GetInteraction")]
+        //public async Task<ActionResult<List<Interaction>>> GetInteraction(string TicketNumber)
+        //{
+        //    var interactions = new List<Interaction>();
+
+        //    try
+        //    {
+        //        using (var connection = _context.Database.GetDbConnection())
+        //        {
+        //            await connection.OpenAsync();
+
+        //            using (var command = connection.CreateCommand())
+        //            {
+        //                command.CommandText = "sp_GetInteractions"; // Panggil SP langsung
+        //                command.CommandType = CommandType.StoredProcedure;
+
+        //                var parameter = command.CreateParameter();
+        //                parameter.ParameterName = "@TicketNumber";
+        //                parameter.Value = TicketNumber;
+        //                command.Parameters.Add(parameter);
+
+        //                using (var reader = await command.ExecuteReaderAsync())
+        //                {
+        //                    while (await reader.ReadAsync())
+        //                    {
+        //                        interactions.Add(new Interaction
+        //                        {
+        //                            TicketNumber = reader["TicketNumber"].ToString(),
+        //                            Description = reader["ResponseComplaint"].ToString(),
+        //                            Status = reader["Status"].ToString(),
+        //                            CaseOwner = reader["DispatchValueName"].ToString(),
+        //                            Name = reader["Name"].ToString(),
+        //                            TanggalInteraction = reader["TanggalInteraction"].ToString()
+        //                        });
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+        //    catch (SqlException sqlEx)
+        //    {
+        //        return StatusCode(500, $"SQL Error: {sqlEx.Message}");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, $"Error: {ex.Message}");
+        //    }
+
+        //    return Ok(interactions);
+        //}
+
+        [HttpGet("GetInteraction")]
+        public async Task<ActionResult<IEnumerable<object>>> CategoryInteraktion(string TicketNumber)
+        {
+            var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(ocmConnectionString))
+                {
+                    using (SqlCommand command = new SqlCommand("sp_GetInteractions", conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.Add(new SqlParameter("@TicketNumber", TicketNumber));
+                      
+
+                        conn.Open();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (reader.Read())
+                            {
+                                result.Add(new
+                                {
+                                    TicketNumber = reader["TicketNumber"].ToString(),
+                                    Description = reader["ResponseComplaint"].ToString(),
+                                    TanggalEskalasiBO = reader["TanggalEskalasiBO"].ToString(),
+                                    keteranganBo = reader["keteranganBo"].ToString(),
+                                    TanggalEskalasiSitika = reader["TanggalEskalasiSitika"].ToString(),
+                                    keteranganSitika = reader["keteranganSitika"].ToString(),
+                                    Status = reader["Status"].ToString(),
+                                    CaseOwner = reader["DispatchValueName"].ToString(),
+                                    Name = reader["Name"].ToString(),
+                                    TanggalInteraction = reader["TanggalInteraction"].ToString()
+                                });
+                            }
+                        }
+                    }
+                }
+                return Ok(result);
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new { message = "Database error occurred", error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", error = ex.Message });
+            }
+
+        }
+
         [HttpGet("CategoryInteraktion")]
         public async Task<ActionResult<IEnumerable<object>>> CategoryInteraktion(string startDate, string EndDate, string Tenant)
         {
@@ -382,7 +697,7 @@ namespace WEBAPI_Bravo.Controller
 
         }
         [HttpGet("CategoryInteraktionTicket")]
-        public async Task<ActionResult<IEnumerable<object>>> CategoryInteraktionTicket(string startDate, string EndDate, string Tenant)
+        public async Task<ActionResult<IEnumerable<object>>> CategoryInteraktionTicket(string startDate, string EndDate, string Tenant,string CategoryUrgent)
         {
             var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
             var result = new List<object>();
@@ -397,6 +712,7 @@ namespace WEBAPI_Bravo.Controller
                         command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
                         command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
                         command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                        command.Parameters.Add(new SqlParameter("@CategoryUrgent", CategoryUrgent));
 
                         conn.Open();
                         using (SqlDataReader reader = await command.ExecuteReaderAsync())
@@ -425,7 +741,7 @@ namespace WEBAPI_Bravo.Controller
 
         }
         [HttpGet("CategoryInteraktionTicketDetail")]
-        public async Task<ActionResult<IEnumerable<object>>> CategoryInteraktionTicketDetail(string startDate, string EndDate, string Tenant,string Channel)
+        public async Task<ActionResult<IEnumerable<object>>> CategoryInteraktionTicketDetail(string startDate, string EndDate, string Tenant, string Params)
         {
             var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
             var result = new List<object>();
@@ -440,7 +756,7 @@ namespace WEBAPI_Bravo.Controller
                         command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
                         command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
                         command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
-                        command.Parameters.Add(new SqlParameter("@Channel", Channel));
+                        command.Parameters.Add(new SqlParameter("@params", Params));
 
                         conn.Open();
                         using (SqlDataReader reader = await command.ExecuteReaderAsync())
@@ -485,6 +801,9 @@ namespace WEBAPI_Bravo.Controller
                         var ParameterStart = new SqlParameter("@USER", UserName);
                         var ParameterEnd = new SqlParameter("@PASSWORD", Password);
 
+                        command.Parameters.Add(ParameterStart);
+                        command.Parameters.Add(ParameterEnd);
+
                         conn.Open();
                         using (SqlDataReader reader = await command.ExecuteReaderAsync())
                         {
@@ -492,8 +811,8 @@ namespace WEBAPI_Bravo.Controller
                             {
                                 result.Add(new
                                 {
-                                    Name = reader["TenantNya"].ToString()
-                                   
+                                    Name = reader["TenantName"].ToString()
+
                                 });
                             }
                         }
@@ -513,8 +832,9 @@ namespace WEBAPI_Bravo.Controller
         }
 
 
+
         [HttpGet("GetDataDDlCategory")] // Endpoint: api/tickets/Top3SubCategory3
-        public async Task<ActionResult<IEnumerable<object>>> GetDataDDlCategory()
+        public async Task<ActionResult<IEnumerable<object>>> GetDataDDlCategory(string Tenant)
         {
             var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
             var result = new List<object>();
@@ -523,6 +843,7 @@ namespace WEBAPI_Bravo.Controller
             {
                 using (SqlCommand cmd = new SqlCommand("GetDataDDlCategory", conn))
                 {
+                    cmd.Parameters.AddWithValue("@Tenant", Tenant);
                     cmd.CommandType = CommandType.StoredProcedure;
                     conn.Open();
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
@@ -803,81 +1124,47 @@ namespace WEBAPI_Bravo.Controller
             });
         }
 
-      
+
         [HttpGet("GetDataSubCategory1bytop5")]
-        public async Task<IActionResult> GetDataSubCategory1bytop5(string startDate, string endDate, string tenant)
+        public async Task<IActionResult> GetDataSubCategory1bytop5(
+      string startDate,
+      string endDate,
+      string SubCategori1Name,string Params)
         {
             var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
 
+            // 🔧 Tambahkan deklarasi result
+            var result = new List<object>();
+
             try
             {
-                 async Task<List<object>> GetDataSubCategory3Details123(string startDate, string endDate, string subCategoryName)
-                {
-                    List<object> result = new List<object>();
-                    var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
-
-                    using (SqlConnection conn = new SqlConnection(crmConnectionString))
-                    {
-                        await conn.OpenAsync();
-                        using (SqlCommand cmd = new SqlCommand("GetDataSubCategory3", conn)) // Pastikan SP benar
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Parameters.Add(new SqlParameter("@p_startdate", startDate));
-                            cmd.Parameters.Add(new SqlParameter("@p_enddate", endDate));
-                            cmd.Parameters.AddWithValue("@SubCategory1Name", subCategoryName);
-
-                            using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
-                            {
-                                while (await reader.ReadAsync())
-                                {
-                                    result.Add(new
-                                    {
-
-                                        Name = reader["SubCategory1Name"].ToString(),
-                                        Periode = reader["Periode"].ToString(),
-                                        History = reader["History"].ToString(),
-                                        Selisih = reader["Selisih"].ToString()
-
-                                    });
-                                }
-                            }
-                        }
-                    }
-
-                    return result;
-                }
-
-
-                var tasks = new List<Task<List<object>>>(); // List untuk task async
-
                 using (SqlConnection conn = new SqlConnection(crmConnectionString))
                 {
-                    using (SqlCommand cmd = new SqlCommand("GetDataSubCategory1bytop5", conn))
+                    await conn.OpenAsync();
+
+                    using (SqlCommand cmd = new SqlCommand("GetDataSubCategory3", conn))
                     {
                         cmd.CommandType = CommandType.StoredProcedure;
-
-                        // Tambahkan parameter SP
-                        cmd.Parameters.Add(new SqlParameter("@p_startdate", startDate));
-                        cmd.Parameters.Add(new SqlParameter("@p_enddate", endDate));
-                        cmd.Parameters.Add(new SqlParameter("@Tenant", tenant));
-
-                        await conn.OpenAsync(); // Gunakan await untuk koneksi async
+                        cmd.Parameters.AddWithValue("@p_startdate", startDate);
+                        cmd.Parameters.AddWithValue("@p_enddate", endDate);
+                        cmd.Parameters.AddWithValue("@SubCategori1Name", SubCategori1Name);
+                        cmd.Parameters.AddWithValue("@params", Params);
 
                         using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                         {
                             while (await reader.ReadAsync())
                             {
-                                string subCategoryName = reader["SubCategory1Name"].ToString();
-
-                                // Tambahkan task langsung ke dalam list tanpa Task.Run()
-                                tasks.Add(GetDataSubCategory3Details123(startDate,endDate,subCategoryName));
+                                result.Add(new
+                                {
+                                    Name = reader["SubCategory1Name"]?.ToString(),
+                                    Periode = reader["Periode"]?.ToString(),
+                                    History = reader["History"]?.ToString(),
+                                    Selisih = reader["Selisih"]?.ToString()
+                                });
                             }
                         }
                     }
                 }
-
-                // Tunggu semua task selesai secara paralel
-                var result = await Task.WhenAll(tasks);
 
                 return Ok(result);
             }
@@ -891,7 +1178,7 @@ namespace WEBAPI_Bravo.Controller
             }
         }
 
-      
+
 
     }
 
@@ -920,6 +1207,11 @@ public class EmailData
 {
     public int Email { get; set; }
 
+}
+public class LoginRequest
+{
+    public string Username { get; set; }
+    public string Password { get; set; }
 }
 
 

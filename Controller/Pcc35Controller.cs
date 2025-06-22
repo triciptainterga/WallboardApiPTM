@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
@@ -10,10 +11,12 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using WEBAPI_Bravo.Model;
@@ -28,6 +31,7 @@ namespace WEBAPI_Bravo.Controller
         private readonly CrmContext _Crmcontext;
         private readonly IConfiguration _configuration;
         private readonly IJwtService _jwtService;
+        private static readonly string key = "0123456789abcdef"; // 16 karakter untuk AES-128
 
         public Pcc35Controller(pcc135Context context, CrmContext Crmcontext, IConfiguration configuration, IJwtService jwtService)
         {
@@ -49,7 +53,9 @@ namespace WEBAPI_Bravo.Controller
             }
 
             // Simulasi validasi user dari database
-            if (request.Username == "admin" && request.Password == "password123")
+            var endCripsi = Encrypt("m@k4nap3l");
+
+            if (request.Username == "sitica135" && request.Password == endCripsi)
             {
                 var token = _jwtService.GenerateToken(request.Username);
                 return Ok(new { Token = token });
@@ -242,7 +248,36 @@ namespace WEBAPI_Bravo.Controller
             }
         }
 
+        public static string Encrypt(string text)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = Encoding.UTF8.GetBytes(key);
+                aes.IV = Encoding.UTF8.GetBytes(key);
 
+                using (MemoryStream ms = new MemoryStream())
+                using (CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                {
+                    using (StreamWriter sw = new StreamWriter(cs))
+                        sw.Write(text);
+                    return Convert.ToBase64String(ms.ToArray());
+                }
+            }
+        }
+
+        public static string Decrypt(string cipherText)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = Encoding.UTF8.GetBytes(key);
+                aes.IV = Encoding.UTF8.GetBytes(key);
+
+                using (MemoryStream ms = new MemoryStream(Convert.FromBase64String(cipherText)))
+                using (CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read))
+                using (StreamReader sr = new StreamReader(cs))
+                    return sr.ReadToEnd();
+            }
+        }
         private string BuildQueryString(TicketQueryParameters parameters)
         {
             var queryParams = new List<string>();
@@ -290,7 +325,7 @@ namespace WEBAPI_Bravo.Controller
 
 
 
-        
+
 
         //[HttpPost("loginAuth")]
         //public IActionResult loginAuth([FromBody] LoginRequest request)
@@ -315,38 +350,38 @@ namespace WEBAPI_Bravo.Controller
         //}
 
 
-        [Authorize] 
-        [HttpPost("UpdateTicket")]
-        public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
-        {
-            if (request == null)
-            {
-                return BadRequest("Invalid request");
-            }
+        //[Authorize] 
+        //[HttpPost("UpdateTicket")]
+        //public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
+        //{
+        //    if (request == null)
+        //    {
+        //        return BadRequest("Invalid request");
+        //    }
 
-            string base64Files = request.Files?.Where(f => !string.IsNullOrEmpty(f)).Any() == true
-                ? string.Join(",", request.Files.Where(f => !string.IsNullOrEmpty(f)))
-                : "";
+        //    string base64Files = request.Files?.Where(f => !string.IsNullOrEmpty(f)).Any() == true
+        //        ? string.Join(",", request.Files.Where(f => !string.IsNullOrEmpty(f)))
+        //        : "";
 
-            var _strTime = new SqlParameter("@TicketNumber", request.TicketId);
-            var _strStatus = new SqlParameter("@Status", request.StatusName);
-            var _strGenesysNumber = new SqlParameter("@Feedback", request.Feedback);
-            var _strThreadID = new SqlParameter("@Files", base64Files);
+        //    var _strTime = new SqlParameter("@TicketNumber", request.TicketId);
+        //    var _strStatus = new SqlParameter("@Status", request.StatusName);
+        //    var _strGenesysNumber = new SqlParameter("@Feedback", request.Feedback);
+        //    var _strThreadID = new SqlParameter("@Files", base64Files);
 
-            try
-            {
-                var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
-                    "EXEC PTM_ResolveTicketSitika @TicketNumber, @Status, @Feedback, @Files",
-                    _strTime, _strStatus, _strGenesysNumber, _strThreadID
-                );
+        //    try
+        //    {
+        //        var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
+        //            "EXEC PTM_ResolveTicketSitika @TicketNumber, @Status, @Feedback, @Files",
+        //            _strTime, _strStatus, _strGenesysNumber, _strThreadID
+        //        );
 
-                return Ok(new { Message = "Ticket updated successfully", data = request });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "Error updating ticket", Error = ex.Message });
-            }
-        }
+        //        return Ok(new { Message = "Ticket updated successfully", data = request });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { Message = "Error updating ticket", Error = ex.Message });
+        //    }
+        //}
         //[HttpPost("UpdateTicket")]
         //public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
 
@@ -389,6 +424,85 @@ namespace WEBAPI_Bravo.Controller
         //    //var js = new JavaScriptSerializer();
 
         //}
+
+        //[Authorize]
+        [HttpPost("UpdateTicket")]
+        public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Invalid request");
+            }
+
+            try
+            {
+                string base64Files = request.Files?
+                    .Where(f => !string.IsNullOrEmpty(f))
+                    .FirstOrDefault(); // Ambil satu dulu (atau bisa loop)
+
+
+                if (!string.IsNullOrEmpty(base64Files))
+                {
+                    string base64Clean = base64Files;
+
+                    // Buang prefix data URI jika ada
+                    if (base64Clean.Contains(","))
+                        base64Clean = base64Clean.Substring(base64Clean.IndexOf(",") + 1);
+
+                    // Bersihkan karakter non-base64
+                    base64Clean = base64Clean
+                                    .Replace("\r", "")
+                                    .Replace("\n", "")
+                                    .Replace(" ", "") // <-- tambahkan jika ada spasi
+                                    .Trim();
+
+                    try
+                    {
+                        byte[] fileBytes = Convert.FromBase64String(base64Clean);
+
+                        // Pastikan folder tujuan ada
+                        string outputPath = @"C:\Temp\Laporan.xlsx";
+                        string folderPath = Path.GetDirectoryName(outputPath);
+                        if (!Directory.Exists(folderPath))
+                            Directory.CreateDirectory(folderPath);
+
+                        // Simpan file
+                        System.IO.File.WriteAllBytes(outputPath, fileBytes);
+                        Console.WriteLine("✅ Sukses disimpan: " + outputPath);
+                    }
+                    catch (FormatException ex)
+                    {
+                        Console.WriteLine("❌ Format Base64 salah: " + ex.Message);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("❌ Error lain: " + ex.Message);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("❗ base64Files kosong atau null.");
+                }
+
+                // Kirim parameter ke SQL (bisa juga kirim fileBytes sebagai varbinary param jika SP mendukung)
+                var _ticketNumber = new SqlParameter("@TicketNumber", request.TicketId);
+                var _status = new SqlParameter("@Status", request.StatusName);
+                var _feedback = new SqlParameter("@Feedback", request.Feedback);
+                var _files = new SqlParameter("@Files", base64Files); // Bisa juga ganti jadi fileBytes jika SQL mendukung VARBINARY
+
+                //var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
+                //    "EXEC PTM_ResolveTicketSitika @TicketNumber, @Status, @Feedback, @Files",
+                //    _ticketNumber, _status, _feedback, _files
+                //);
+
+                return Ok(new { Message = "Ticket updated successfully", data = request });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Error updating ticket", Error = ex.Message });
+            }
+        }
+
 
 
         [HttpGet]
@@ -596,9 +710,4 @@ public class TicketData
     public int? LastSlaStatus { get; set; }
     public string TicketDescription { get; set; }
     public bool IsRead { get; set; }
-}
-public class LoginRequest
-{
-    public string Username { get; set; }
-    public string Password { get; set; }
 }

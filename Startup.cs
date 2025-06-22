@@ -17,6 +17,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using WEBAPI_Bravo.Model;
+using WEBAPI_Bravo.Services;
 
 
 namespace WEBAPI_Bravo
@@ -68,6 +69,7 @@ namespace WEBAPI_Bravo
             // Tambahkan Authorization
             services.AddAuthorization();
             services.AddScoped<IJwtService, JwtService>(); 
+            services.AddScoped<iDetailServices, DetailServices>(); 
 
             // Menambahkan konfigurasi CORS untuk mengizinkan domain tertentu
             //services.AddCors(options =>
@@ -164,8 +166,9 @@ namespace WEBAPI_Bravo
             // Enable Swagger UI
             app.UseSwaggerUI(c =>
             {
-              // c.SwaggerEndpoint("/APIWallboardPtm/swagger/v1/swagger.json", "Syntera API V1");
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
+              //c.SwaggerEndpoint("/APIWallboardPtm/swagger/v1/swagger.json", "Syntera API V1");
+               // c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
+               c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
             });
         }
     }

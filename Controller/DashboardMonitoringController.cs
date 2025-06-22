@@ -154,7 +154,7 @@ namespace WEBAPI_Bravo.Controller
         }
 
         [HttpGet("GetDataDDlCaseOwner")]
-        public async Task<ActionResult<IEnumerable<object>>> GetDataDDlCaseOwner()
+        public async Task<ActionResult<IEnumerable<object>>> GetDataDDlCaseOwner(string Tenant)
         {
             var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
             var result = new List<object>();
@@ -162,6 +162,35 @@ namespace WEBAPI_Bravo.Controller
             using (SqlConnection conn = new SqlConnection(crmConnectionString))
             {
                 using (SqlCommand cmd = new SqlCommand("GetDataDDlCaseOwner", conn))
+                {
+                    cmd.Parameters.Add(new SqlParameter("@Tenant", Tenant));
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new
+                            {
+                                value = reader["ID"].ToString(),
+                                text = reader["Name"].ToString()
+                            });
+                        }
+                    }
+                }
+            }
+
+            return Ok(result);
+        }
+        [HttpGet("GetDataDDlSubCategoryUrgent")]
+        public async Task<ActionResult<IEnumerable<object>>> GetDataDDlSubCategoryUrgent()
+        {
+            var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var result = new List<object>();
+
+            using (SqlConnection conn = new SqlConnection(crmConnectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("GetDataDdlSubCategoryUrgent", conn))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     conn.Open();
@@ -374,6 +403,7 @@ namespace WEBAPI_Bravo.Controller
                                     Closed = reader["Closed"].ToString(),
                                     OnProgress = reader["OnProgress"].ToString(),
                                     Total = reader["Total"].ToString(),
+                                    Kota = reader["Kota"].ToString(),
 
                                 });
                             }

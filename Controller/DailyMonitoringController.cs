@@ -41,7 +41,7 @@ namespace WEBAPI_Bravo.Controller
         public async Task<ActionResult<object>> GetDataTickeyByRegion(
              [FromQuery] string startDate,
              [FromQuery] string endDate,
-             [FromQuery] string Tenant)
+             [FromQuery] string Tenant,[FromQuery] string CategoryUrgent)
         {
             var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
             object result = null;
@@ -56,6 +56,7 @@ namespace WEBAPI_Bravo.Controller
                     cmd.Parameters.Add(new SqlParameter("@p_startdate", startDate));
                     cmd.Parameters.Add(new SqlParameter("@p_enddate", endDate));
                     cmd.Parameters.Add(new SqlParameter("@Tenant", Tenant));  // New parameter
+                    cmd.Parameters.Add(new SqlParameter("@CategoryUrgent", CategoryUrgent));  // New parameter
                    
                     conn.Open();
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "E:\\ApiPertaminaWallboard\\WallboardPtm\\WEBAPI_Bravo.csproj": {}
+    "E:\\ApiWbPtm2025\\WallboardApiPTM\\WEBAPI_Bravo.csproj": {}
   },
   "projects": {
-    "E:\\ApiPertaminaWallboard\\WallboardPtm\\WEBAPI_Bravo.csproj": {
+    "E:\\ApiWbPtm2025\\WallboardApiPTM\\WEBAPI_Bravo.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\ApiPertaminaWallboard\\WallboardPtm\\WEBAPI_Bravo.csproj",
+        "projectUniqueName": "E:\\ApiWbPtm2025\\WallboardApiPTM\\WEBAPI_Bravo.csproj",
         "projectName": "WEBAPI_Bravo",
-        "projectPath": "E:\\ApiPertaminaWallboard\\WallboardPtm\\WEBAPI_Bravo.csproj",
+        "projectPath": "E:\\ApiWbPtm2025\\WallboardApiPTM\\WEBAPI_Bravo.csproj",
         "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-        "outputPath": "E:\\ApiPertaminaWallboard\\WallboardPtm\\obj\\",
+        "outputPath": "E:\\ApiWbPtm2025\\WallboardApiPTM\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -52,6 +52,10 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "dependencies": {
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[3.1.17, )"
+            },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
               "version": "[5.0.17, )"
@@ -72,6 +76,10 @@
               "target": "Package",
               "version": "[5.0.17, )"
             },
+            "Microsoft.IdentityModel.Tokens": {
+              "target": "Package",
+              "version": "[8.6.0, )"
+            },
             "Microsoft.VisualStudio.Web.CodeGeneration.Design": {
               "target": "Package",
               "version": "[5.0.2, )"
@@ -80,9 +88,17 @@
               "target": "Package",
               "version": "[5.0.3.1, )"
             },
+            "Novell.Directory.Ldap.NETStandard": {
+              "target": "Package",
+              "version": "[3.6.0, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.6.2, )"
+            },
+            "System.DirectoryServices": {
+              "target": "Package",
+              "version": "[9.0.5, )"
             }
           },
           "imports": [

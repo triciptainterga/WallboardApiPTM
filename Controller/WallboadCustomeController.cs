@@ -10,6 +10,8 @@ using WEBAPI_Bravo.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using System.Runtime.CompilerServices;
+using Microsoft.VisualBasic;
+using Org.BouncyCastle.Asn1.X509;
 
 namespace WEBAPI_Bravo.Controller
 {
@@ -33,7 +35,52 @@ namespace WEBAPI_Bravo.Controller
         }
 
 
+        [HttpGet("GetDataSosmedCurrentMonth")]
+        public async Task<List<datas>> GetDataSosmedCurrentMonth( string Tenant)
+        {
+            var users = new List<datas>();
 
+            try
+            {
+                using (var connection = _context.Database.GetDbConnection())
+                {
+                    await connection.OpenAsync();
+
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = "EXEC GetDataSosmedCurrentMonth @Tenant";
+                        var ParameterStart = new SqlParameter("@Tenant", Tenant);
+                        //var ParameterEnd = new SqlParameter("@p_enddate", EndDate);
+
+                        command.Parameters.Add(ParameterStart);
+                        //command.Parameters.Add(ParameterEnd);
+                        command.CommandType = CommandType.Text;
+
+                        using (var result = await command.ExecuteReaderAsync())
+                        {
+                            while (await result.ReadAsync())
+                            {
+                                users.Add(new datas
+                                {
+                                    Name = result.GetString(0),
+                                    Jumlah = result.GetDecimal(1)
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                throw new Exception($"An error occurred: {sqlEx.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+
+            return users;
+        }
 
         [HttpGet("GetDataSosmedMonth")]
         public async Task<List<datas>> GetDataSosmedMonth(string startDate, string EndDate)
@@ -82,7 +129,7 @@ namespace WEBAPI_Bravo.Controller
             return users;
         }   
         [HttpGet("GetDataEmailMonth")]
-        public async Task<List<datas>> GetDataEmailMonth(string startDate, string EndDate)
+        public async Task<List<datas>> GetDataEmailMonth(string startDate, string EndDate,string Tenant)
         {
             var users = new List<datas>();
 
@@ -94,12 +141,14 @@ namespace WEBAPI_Bravo.Controller
 
                     using (var command = connection.CreateCommand())
                     {
-                        command.CommandText = "EXEC GetDataEmailMonth @p_startdate,@p_enddate";
+                        command.CommandText = "EXEC GetDataEmailMonth @p_startdate,@p_enddate,@Tenant";
                         var ParameterStart = new SqlParameter("@p_startdate", startDate);
                         var ParameterEnd = new SqlParameter("@p_enddate", EndDate);
+                        var Tenants = new SqlParameter("@Tenant", Tenant);
 
                         command.Parameters.Add(ParameterStart);
                         command.Parameters.Add(ParameterEnd);
+                        command.Parameters.Add(Tenants);
                         command.CommandType = CommandType.Text;
                      
                         using (var result = await command.ExecuteReaderAsync())
@@ -464,7 +513,7 @@ namespace WEBAPI_Bravo.Controller
         }
 
         [HttpGet("GetDataSosmed1")]
-        public async Task<List<datas>> GetDataSosmed1()
+        public async Task<List<datas>> GetDataSosmed1(string Tenant)
         {
             var users = new List<datas>();
 
@@ -476,11 +525,11 @@ namespace WEBAPI_Bravo.Controller
 
                     using (var command = connection.CreateCommand())
                     {
-                        command.CommandText = "EXEC  GetDataSosmed1";
-                        //var ParameterStart = new SqlParameter("@p_startdate", startDate);
+                        command.CommandText = "EXEC  GetDataSosmed1 @Tenant";
+                        var ParameterStart = new SqlParameter("@Tenant", Tenant);
                         //var ParameterEnd = new SqlParameter("@p_enddate", EndDate);
 
-                        //command.Parameters.Add(ParameterStart);
+                        command.Parameters.Add(ParameterStart);
                         //command.Parameters.Add(ParameterEnd);
                         command.CommandType = CommandType.Text;
 
@@ -599,12 +648,19 @@ namespace WEBAPI_Bravo.Controller
             {
                  Console.WriteLine($"An error occurred: {ex.Message}");
             }
-
             return users;
         }
+
+
+      
+
+
+        //SELECT tInteraction.*, msUser.NAME, CONVERT(varchar, dbo.tInteraction.DateCreate, 13) AS TanggalInteraction FROM tInteraction
+
+        //    LEFT OUTER JOIN msUser ON tInteraction.AgentCreate = msUser.USERNAME
+        //WHERE tInteraction.TicketNumber= '20250312023004905' ORDER BY tInteraction.ID DESC
     }
 }
-
 public class datas
 {
     public string Name { get; set; }
@@ -622,4 +678,15 @@ public class dataInteractionDay
     public string Name { get; set; }
     public string DateInteraction { get; set; }
     public decimal Jumlah { get; set; }
+}
+public class Interaction
+{
+
+    public string Description { get; set; }
+    public string Status { get; set; }
+    public string TicketNumber { get; set; }
+    public string CaseOwner { get; set; }
+    public string Name { get; set; }
+    public string TanggalInteraction { get; set; }
+    
 }
