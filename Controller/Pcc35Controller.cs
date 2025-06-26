@@ -429,6 +429,7 @@ namespace WEBAPI_Bravo.Controller
         [HttpPost("UpdateTicket")]
         public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
         {
+            string extension ;
             if (request == null)
             {
                 return BadRequest("Invalid request");
@@ -450,39 +451,58 @@ namespace WEBAPI_Bravo.Controller
                         base64Clean = base64Clean.Substring(base64Clean.IndexOf(",") + 1);
 
                     // Bersihkan karakter non-base64
-                    base64Clean = base64Clean
-                                    .Replace("\r", "")
-                                    .Replace("\n", "")
-                                    .Replace(" ", "") // <-- tambahkan jika ada spasi
-                                    .Trim();
+                    //base64Clean = base64Clean
+                    //                .Replace("\r", "")
+                    //                .Replace("\n", "")
+                    //                .Replace(" ", "") // <-- tambahkan jika ada spasi
+                    //                .Trim();
 
                     try
                     {
+
+                      
                         byte[] fileBytes = Convert.FromBase64String(base64Clean);
 
+                        if (fileBytes.Length >= 3 && fileBytes[0] == 0xFF && fileBytes[1] == 0xD8 && fileBytes[2] == 0xFF)
+                            extension = ".jpg";
+                        // PNG
+                        else if (fileBytes.Length >= 8 &&
+                                 fileBytes[0] == 0x89 && fileBytes[1] == 0x50 &&
+                                 fileBytes[2] == 0x4E && fileBytes[3] == 0x47)
+                            extension = ".png";
+                        // PDF
+                        else if (fileBytes.Length >= 4 &&
+                                 fileBytes[0] == 0x25 && fileBytes[1] == 0x50 &&
+                                 fileBytes[2] == 0x44 && fileBytes[3] == 0x46)
+                            extension = ".pdf";
+                        // DOCX / XLSX / ZIP
+                        else if (fileBytes.Length >= 4 &&
+                                 fileBytes[0] == 0x50 && fileBytes[1] == 0x4B &&
+                                 fileBytes[2] == 0x03 && fileBytes[3] == 0x04)
+                            extension = ".zip"; // bisa juga .docx/.xlsx (harus dicek internal content)
+                        else
+                            extension = ".bin";
+
                         // Pastikan folder tujuan ada
-                        string outputPath = @"C:\Temp\Laporan.xlsx";
+                        string outputPath = @"C:\Temp\" + request.TicketId +"_" + DateTime.Now.ToString("ddMM_HHmm_fff")+ extension;
                         string folderPath = Path.GetDirectoryName(outputPath);
                         if (!Directory.Exists(folderPath))
                             Directory.CreateDirectory(folderPath);
 
                         // Simpan file
                         System.IO.File.WriteAllBytes(outputPath, fileBytes);
-                        Console.WriteLine("✅ Sukses disimpan: " + outputPath);
+                       
                     }
                     catch (FormatException ex)
                     {
-                        Console.WriteLine("❌ Format Base64 salah: " + ex.Message);
+                        return StatusCode(500, new { Message = "Error updating ticket", Error = ex.Message });
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("❌ Error lain: " + ex.Message);
+                        return StatusCode(500, new { Message = "Error updating ticket", Error = ex.Message });
                     }
                 }
-                else
-                {
-                    Console.WriteLine("❗ base64Files kosong atau null.");
-                }
+               
 
                 // Kirim parameter ke SQL (bisa juga kirim fileBytes sebagai varbinary param jika SP mendukung)
                 var _ticketNumber = new SqlParameter("@TicketNumber", request.TicketId);
@@ -490,10 +510,10 @@ namespace WEBAPI_Bravo.Controller
                 var _feedback = new SqlParameter("@Feedback", request.Feedback);
                 var _files = new SqlParameter("@Files", base64Files); // Bisa juga ganti jadi fileBytes jika SQL mendukung VARBINARY
 
-                //var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
-                //    "EXEC PTM_ResolveTicketSitika @TicketNumber, @Status, @Feedback, @Files",
-                //    _ticketNumber, _status, _feedback, _files
-                //);
+                var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
+                    "EXEC PTM_ResolveTicketSitika @TicketNumber, @Status, @Feedback, @Files",
+                    _ticketNumber, _status, _feedback, _files
+                );
 
                 return Ok(new { Message = "Ticket updated successfully", data = request });
             }
