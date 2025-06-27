@@ -18,6 +18,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using WEBAPI_Bravo.Model;
 
@@ -425,7 +426,7 @@ namespace WEBAPI_Bravo.Controller
 
         //}
 
-        //[Authorize]
+        [Authorize]
         [HttpPost("UpdateTicket")]
         public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
         {
@@ -437,78 +438,111 @@ namespace WEBAPI_Bravo.Controller
                 var apiSettings = _configuration.GetSection("ApiSettings").Get<ApiSettings>();
                 string outputPath = apiSettings.OutputPath;
 
-                string base64String = request.Files?
-                    .Where(f => !string.IsNullOrEmpty(f))
-                    .FirstOrDefault(); // Ambil hanya satu untuk contoh
+                if (request.Files == null || !request.Files.Any())
+                    return BadRequest("Tidak ada file yang dikirim.");
 
-                if (string.IsNullOrEmpty(base64String))
-                    return BadRequest("Base64 file kosong");
+                // Gabungan string dari request.Files[0]
+                string base64Combined = request.Files.FirstOrDefault();
 
-                byte[] fileBytes;
-                string extension = ".bin"; // default
+                // 1. Bersihkan newline dari seluruh string
+                base64Combined = base64Combined.Replace("\r", "").Replace("\n", "").Replace(" ", "");
 
-                // 1. Bersihkan header Base64
-                if (base64String.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                // 2. Pecah jadi list per "data:" prefix
+                var base64Files = Regex.Matches(base64Combined, @"data:[\s\S]+?(?=data:|$)", RegexOptions.IgnoreCase)
+                    .Cast<Match>()
+                    .Select(m => m.Value.Trim())
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .ToList();
+
+                if (base64Files.Count == 0)
+                    return BadRequest("Tidak ditemukan file base64 yang valid.");
+
+                var savedFiles = new List<string>();
+                int index = 1;
+
+                foreach (var base64StringRaw in base64Files)
                 {
-                    base64String = base64String.Substring(base64String.IndexOf(',') + 1);
+                    string base64String = base64StringRaw;
+                    string extension = ".bin";
+                    string mimeType = null;
+
+                    // 3. Deteksi MIME type dan tentukan ekstensi
+                    if (base64String.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var match = Regex.Match(base64String, @"data:(?<mime>[\w\-/\.]+);base64,", RegexOptions.IgnoreCase);
+                        if (match.Success)
+                        {
+                            mimeType = match.Groups["mime"].Value;
+                            extension = mimeType switch
+                            {
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => ".xlsx",
+                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => ".docx",
+                                "application/pdf" => ".pdf",
+                                "image/jpeg" => ".jpg",
+                                "image/png" => ".png",
+                                "application/msword" => ".doc",
+                                "text/plain" => ".txt",
+                                _ => ".bin"
+                            };
+                        }
+
+                        // Hapus prefix data:...;base64,
+                        base64String = base64String.Substring(base64String.IndexOf(',') + 1);
+                    }
+
+                    // 4. Padding base64 jika kurang
+                    //int mod = base64String.Length % 4;
+                    //if (mod != 0)
+                    //    base64String = base64String.PadRight(base64String.Length + (4 - mod), '=');
+
+                    byte[] fileBytes;
+                    try
+                    {
+                        fileBytes = Convert.FromBase64String(base64String.TrimEnd(','));
+                    }
+                    catch (FormatException ex)
+                    {
+                        return BadRequest($"File ke-{index} base64 tidak valid: {ex.Message}");
+                    }
+
+                    // 5. Simpan file ke disk
+                    string fileName = $"{request.TicketId}_{DateTime.Now:ddMM_HHmm_fff}_{index}{extension}";
+                    string fullPath = Path.Combine(outputPath, fileName);
+                    string folderPath = Path.GetDirectoryName(fullPath);
+                    if (!Directory.Exists(folderPath))
+                        Directory.CreateDirectory(folderPath);
+
+                    System.IO.File.WriteAllBytes(fullPath, fileBytes);
+                    savedFiles.Add(fullPath);
+
+                    var _ticketNumber = new SqlParameter("@TicketNumber", request.TicketId);
+                    var _status = new SqlParameter("@Status", request.StatusName ?? "");
+                    var _feedback = new SqlParameter("@Feedback", request.Feedback ?? "");
+                    var _files = new SqlParameter("@Files", base64String.TrimEnd(',')); // atau gabung path
+
+                    var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
+                        "EXEC PTM_ResolveTicketSitika @TicketNumber, @Status, @Feedback, @Files",
+                        _ticketNumber, _status, _feedback, _files
+                    );
+                    index++;
                 }
 
-                base64String = base64String.Trim().Replace("\r", "").Replace("\n", "").Replace(" ", "");
+                // 6. Kirim ke Stored Procedure (ambil salah satu atau digabung path-nya)
+                
 
-                // 2. Tambah padding jika perlu
-                int mod = base64String.Length % 4;
-                if (mod != 0)
+                return Ok(new
                 {
-                    base64String = base64String.PadRight(base64String.Length + (4 - mod), '=');
-                }
-
-                try
-                {
-                    fileBytes = Convert.FromBase64String(base64String);
-                }
-                catch (FormatException ex)
-                {
-                    return BadRequest("Base64 tidak valid: " + ex.Message);
-                }
-
-                // 3. Deteksi ekstensi berdasarkan signature
-                if (fileBytes.Length >= 4 &&
-                    fileBytes[0] == 0x50 && fileBytes[1] == 0x4B && fileBytes[2] == 0x03 && fileBytes[3] == 0x04)
-                {
-                    extension = ".xlsx"; // kemungkinan besar Excel (ZIP)
-                }
-
-                // 4. Buat path file dan pastikan folder ada
-                string fileName = $"{request.TicketId}_{DateTime.Now:ddMM_HHmm_fff}{extension}";
-                string fullPath = Path.Combine(outputPath, fileName);
-
-                string folderPath = Path.GetDirectoryName(fullPath);
-                if (!Directory.Exists(folderPath))
-                    Directory.CreateDirectory(folderPath);
-
-                // 5. Simpan file ke disk
-                System.IO.File.WriteAllBytes(fullPath, fileBytes);
-
-                // 6. Jalankan SP SQL
-                var _ticketNumber = new SqlParameter("@TicketNumber", request.TicketId);
-                var _status = new SqlParameter("@Status", request.StatusName ?? "");
-                var _feedback = new SqlParameter("@Feedback", request.Feedback ?? "");
-                var _files = new SqlParameter("@Files", base64String); // atau bisa kirim path/VARBINARY
-
-                var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
-                    "EXEC PTM_ResolveTicketSitika @TicketNumber, @Status, @Feedback, @Files",
-                    _ticketNumber, _status, _feedback, _files
-                );
-
-                return Ok(new { Message = "Ticket updated successfully", FilePath = fullPath, data = request });
+                    Message = "Ticket updated successfully",
+                    FileCount = savedFiles.Count,
+                    SavedFiles = savedFiles,
+                    data = request
+                });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { Message = "Error updating ticket", Error = ex.Message });
             }
         }
-
-
 
 
         [HttpGet]
