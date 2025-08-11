@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -33,6 +33,9 @@ namespace WEBAPI_Bravo
 
         public void ConfigureServices(IServiceCollection services)
         {
+
+            services.AddHttpClient(); // <--- ini penting
+            services.AddControllers();
             services.AddDbContext<pcc135Context>(options =>
                  options.UseMySQL(
                      Configuration.GetConnectionString("DefaultConnection")
@@ -81,6 +84,8 @@ namespace WEBAPI_Bravo
             //    //           .AllowAnyMethod(); // Mengizinkan semua metode HTTP (GET, POST, dll)
             //    //});
             //});
+
+
 
             services.AddCors(options =>
             {
@@ -166,9 +171,9 @@ namespace WEBAPI_Bravo
             // Enable Swagger UI
             app.UseSwaggerUI(c =>
             {
-              //c.SwaggerEndpoint("/APIWallboardPtm/swagger/v1/swagger.json", "Syntera API V1");
-               // c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
-               c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
+            // c.SwaggerEndpoint("/APIWallboardPtm/swagger/v1/swagger.json", "Syntera API V1");
+             //   c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
+             c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
             });
         }
     }

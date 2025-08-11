@@ -2,14 +2,17 @@
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using WEBAPI_Bravo.Model;
 using WEBAPI_Bravo.Services;
@@ -22,31 +25,42 @@ namespace WEBAPI_Bravo.Controller
     {
         private readonly pcc135Context _context;
         private readonly iDetailServices _detailServices;
+        private readonly string _CrmconnectionString;
+        private readonly IConfiguration _configuration;
 
-        public DataAvayaController(pcc135Context context, iDetailServices DetailServices)
+
+
+        public DataAvayaController(pcc135Context context, iDetailServices DetailServices, IConfiguration configuration)
         {
             _context = context;
             _detailServices = DetailServices;
+            _configuration = configuration;
 
 
         }
         [HttpGet("ReportAIO_VoiceWB")]
         public async Task<IActionResult> GetData(string Tenant)
         {
+
+            string skill = string.Empty;
+
+            // var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
+            var crmConnectionString = _configuration.GetConnectionString("CrmConnection");
+
+            using (var conn = new SqlConnection(crmConnectionString))
+            using (var cmd = new SqlCommand("GetSkillByChannelAndUser", conn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@Channel", "Voice");
+                cmd.Parameters.AddWithValue("@Users", Tenant);
+                conn.Open();
+                var result = await cmd.ExecuteScalarAsync();
+                skill = result?.ToString();
+            }
+
+            Console.WriteLine($"Skill: {skill}");
             string localDirectory = @"E:\DataAvaya";
             string NameFile = "ReportAIO_VoiceAll.txt";
-
-            //if (Tenant.Trim() == "PCC 135 Abdul Muis")
-            //    NameFile = "ReportAIO_VoiceWB_Abdul_Muis.txt";
-            //else if (Tenant.Trim() == "Shared Service")
-            //    NameFile = "ReportAIO_VoiceWB_SS.txt";
-            //else if (Tenant.Trim() == "PCC 135 Patra Niaga")
-            //    NameFile = "ReportAIO_VoiceWB.txt";table
-            //else 
-            //    NameFile = "ReportAIO_VoiceAll.txt";
-
-
-
 
 
             string FilePath = Path.Combine(localDirectory, NameFile);
@@ -55,11 +69,11 @@ namespace WEBAPI_Bravo.Controller
                 return NotFound("File not found.");
             }
 
-            var data = await _detailServices.ReadDataCallFromFile(FilePath);
+            var data = await _detailServices.ReadDataCallFromFile(FilePath, skill);
             return Ok(data);
         }
         [HttpGet("detail-data")]
-        public IActionResult GetDetailData123()
+        public IActionResult GetDetailData123(string Tenant,string Channel)
         {
 
             string localDirectory = @"E:\DataAvaya";
@@ -74,33 +88,193 @@ namespace WEBAPI_Bravo.Controller
             return Ok(data);
         }
 
-        [HttpGet("ReportTodayWB")]
-        public async Task<IActionResult> ReportTodayWB(string Tenant)
+        [HttpGet("detail-data-new")]
+        public async Task<IActionResult> GetDetailDataNew(string ParamsJSessionId,int paramsId)
         {
+            var url = "https://10.190.1.25:8443/CMSWeb/rest/reports/"+ paramsId;
 
-            string localDirectory = @"E:\DataAvaya";
-            string NameFile = "VOICE_TODAY_ALL.txt";
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("Cookie", "JSESSIONID="+ ParamsJSessionId);
 
-            //if (Tenant.Trim() == "PCC 135 Abdul Muis")
-            //    NameFile = "VOICE_TODAY_ABDUL_MUIS.txt";
-            //else if (Tenant.Trim() == "Shared Service")
-            //    NameFile = "VOICE_TODAY_SS.txt";
-            //else if (Tenant.Trim() == "PCC 135 Patra Niaga")
-            //    NameFile = "VOICE_TODAY_C&T.txt";
-            //else
-            //    NameFile = "VOICE_TODAY_ALL.txt";
-
-            string FilePath = Path.Combine(localDirectory, NameFile);
-            if (!System.IO.File.Exists(FilePath))
+            // Bypass SSL (jika pakai self-signed certificate)
+            HttpClientHandler handler = new HttpClientHandler
             {
-                return NotFound("File not found.");
-            }
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
 
-            var data = await _detailServices.ReadDataTodayFromFile(FilePath);
-            return Ok(data);
+            using (var client = new HttpClient(handler))
+            {
+                client.DefaultRequestHeaders.Add("User-Agent", "DotNetClient");
+
+                var response = await client.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return StatusCode((int)response.StatusCode, "Failed to fetch report");
+
+                var json = await response.Content.ReadAsStringAsync();
+                return Content(json, "application/json");
+            }
         }
 
 
+
+        [HttpGet("detail-data-liveChat")]
+        public async Task<IActionResult> GetDetailDataLIveChat(string ParamsJSessionId, int paramsId)
+        {
+            var url = "https://10.190.1.25:8443/CMSWeb/rest/reports/" + paramsId;
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("Cookie", "JSESSIONID=" + ParamsJSessionId);
+
+            // Bypass SSL (jika pakai self-signed certificate)
+            HttpClientHandler handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+
+            using (var client = new HttpClient(handler))
+            {
+                client.DefaultRequestHeaders.Add("User-Agent", "DotNetClient");
+
+                var response = await client.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return StatusCode((int)response.StatusCode, "Failed to fetch report");
+
+                var json = await response.Content.ReadAsStringAsync();
+                return Content(json, "application/json");
+            }
+        }
+        [HttpGet("detail-data-sosmed")]
+        public async Task<IActionResult> GetDetailDataSosmed(string ParamsJSessionId, int paramsId)
+        {
+            var url = "https://10.190.1.25:8443/CMSWeb/rest/reports/" + paramsId;
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("Cookie", "JSESSIONID=" + ParamsJSessionId);
+
+            // Bypass SSL (jika pakai self-signed certificate)
+            HttpClientHandler handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+
+            using (var client = new HttpClient(handler))
+            {
+                client.DefaultRequestHeaders.Add("User-Agent", "DotNetClient");
+
+                var response = await client.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return StatusCode((int)response.StatusCode, "Failed to fetch report");
+
+                var json = await response.Content.ReadAsStringAsync();
+                return Content(json, "application/json");
+            }
+        }
+        [HttpGet("detail-data-video")]
+        public async Task<IActionResult> GetDetailDataVideo(string ParamsJSessionId, int paramsId)
+        {
+            var url = "https://10.190.1.25:8443/CMSWeb/rest/reports/" + paramsId;
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("Cookie", "JSESSIONID=" + ParamsJSessionId);
+
+            // Bypass SSL (jika pakai self-signed certificate)
+            HttpClientHandler handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+
+            using (var client = new HttpClient(handler))
+            {
+                client.DefaultRequestHeaders.Add("User-Agent", "DotNetClient");
+
+                var response = await client.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return StatusCode((int)response.StatusCode, "Failed to fetch report");
+
+                var json = await response.Content.ReadAsStringAsync();
+                return Content(json, "application/json");
+            }
+        }
+        [HttpGet("detail-data-email")]
+        public async Task<IActionResult> GetDetailDataEmail(string ParamsJSessionId, int paramsId)
+        {
+            var url = "https://10.190.1.25:8443/CMSWeb/rest/reports/" + paramsId;
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("Cookie", "JSESSIONID=" + ParamsJSessionId);
+
+            // Bypass SSL (jika pakai self-signed certificate)
+            HttpClientHandler handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+
+            using (var client = new HttpClient(handler))
+            {
+                client.DefaultRequestHeaders.Add("User-Agent", "DotNetClient");
+
+                var response = await client.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return StatusCode((int)response.StatusCode, "Failed to fetch report");
+
+                var json = await response.Content.ReadAsStringAsync();
+                return Content(json, "application/json");
+            }
+        }
+        [HttpGet("ReportTodayWB")]
+        public async Task<IActionResult> ReportTodayWB(string Tenant, string channel)
+        {
+            try
+            {
+                string skill = string.Empty;
+
+               // var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
+                var crmConnectionString = _configuration.GetConnectionString("CrmConnection");
+
+                using (var conn = new SqlConnection(crmConnectionString))
+                using (var cmd = new SqlCommand("GetSkillByChannelAndUser", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@Channel", channel);
+                    cmd.Parameters.AddWithValue("@Users", Tenant);
+                    conn.Open();
+                    var result = await cmd.ExecuteScalarAsync();
+                    skill = result?.ToString();
+                }
+
+                Console.WriteLine($"Skill: {skill}");
+
+                string localDirectory = @"E:\DataAvaya";
+                string NameFile = "VOICE_TODAY_ALL.txt";
+                string FilePath = Path.Combine(localDirectory, NameFile);
+
+                if (!System.IO.File.Exists(FilePath))
+                {
+                    return NotFound("File not found.");
+                }
+
+                var data = await _detailServices.ReadDataTodayFromFile(FilePath, skill);
+
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                // Log error jika perlu
+                Console.WriteLine($"Error: {ex.Message}");
+
+                return StatusCode(500, new
+                {
+                    status = "error",
+                    message = "Terjadi kesalahan saat memproses permintaan.",
+                    detail = ex.Message
+                });
+            }
+        }
 
 
         //public CallCenterData ReadDataFromTxt(string filePath)

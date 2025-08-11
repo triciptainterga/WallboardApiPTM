@@ -17,6 +17,9 @@ namespace WEBAPI_Bravo.Model
         {
         }
 
+
+        public DbSet<WallboardCard> WallboardCards { get; set; }
+
         public virtual DbSet<AdditionalFieldCustomer> AdditionalFieldCustomers { get; set; }
         public virtual DbSet<AdditionalFieldTicket> AdditionalFieldTickets { get; set; }
         public virtual DbSet<Faq> Faqs { get; set; }
@@ -83,6 +86,21 @@ namespace WEBAPI_Bravo.Model
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
+            modelBuilder.Entity<WallboardCard>(entity =>
+            {
+                entity.ToTable("wallboard_cards"); // pastikan sama dengan nama tabel di DB
+
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.Files).HasColumnName("files");
+                entity.Property(e => e.Title).HasColumnName("title");
+                entity.Property(e => e.Skill).HasColumnName("skill");
+                entity.Property(e => e.Channel).HasColumnName("channel");
+                entity.Property(e => e.Users).HasColumnName("users");
+            });
+
             modelBuilder.Entity<AdditionalFieldCustomer>(entity =>
             {
                 entity.HasKey(e => e.CustId)

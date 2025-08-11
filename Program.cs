@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Net; // ✅ Tambahkan ini agar bisa akses ServicePointManager
 
 namespace WEBAPI_Bravo
 {
@@ -13,6 +14,9 @@ namespace WEBAPI_Bravo
     {
         public static void Main(string[] args)
         {
+            // ✅ Set TLS 1.2 sebelum aplikasi dijalankan
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
             CreateHostBuilder(args).Build().Run();
         }
 

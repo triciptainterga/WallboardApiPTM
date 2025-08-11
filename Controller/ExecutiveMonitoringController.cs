@@ -186,7 +186,7 @@ namespace WEBAPI_Bravo.Controller
             return Ok(result);
         }
         [HttpGet("CategoryInteraktionTicketDaily")] 
-        public async Task<ActionResult<IEnumerable<object>>> CategoryInteraktionTicketDaily(string startDate, string EndDate, string Tenant)
+        public async Task<ActionResult<IEnumerable<object>>> CategoryInteraktionTicketDaily(string startDate, string EndDate, string Tenant, string Region)
         {
             var ocmConnectionString = _configuration.GetConnectionString("CrmConnection");
             var result = new List<object>();
@@ -199,7 +199,7 @@ namespace WEBAPI_Bravo.Controller
                     command.Parameters.Add(new SqlParameter("@p_startdate", startDate));
                     command.Parameters.Add(new SqlParameter("@p_enddate", EndDate));
                     command.Parameters.Add(new SqlParameter("@Tenant", Tenant));
-                   // command.Parameters.Add(new SqlParameter("@region", region));
+                    command.Parameters.Add(new SqlParameter("@region", Region));
 
                     conn.Open();
                     using (SqlDataReader reader = await command.ExecuteReaderAsync())

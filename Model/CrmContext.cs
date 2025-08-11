@@ -8,10 +8,11 @@ namespace WEBAPI_Bravo.Model
     {
         public CrmContext()
         {
+
         }
       
 
-       
+
 
         public CrmContext(DbContextOptions<CrmContext> options)
             : base(options)

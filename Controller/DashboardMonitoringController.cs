@@ -370,7 +370,7 @@ namespace WEBAPI_Bravo.Controller
         }
 
         [HttpGet("SebaranTicketDashboard")]
-        public async Task<ActionResult<IEnumerable<object>>> SebaranTicketDashboard(string startDate, string EndDate, string Tenant, string Status, string CaseOwner, string categori)
+        public async Task<ActionResult<IEnumerable<object>>> SebaranTicketDashboard(string startDate, string EndDate, string Tenant, string Status, string CaseOwner, string categori,string Region)
         {
             var ocmConnectionString = _configuration.GetConnectionString("CRMConnection");
             var result = new List<object>();
@@ -388,6 +388,7 @@ namespace WEBAPI_Bravo.Controller
                         command.Parameters.Add(new SqlParameter("@Status", Status));
                         command.Parameters.Add(new SqlParameter("@CaseOwner", CaseOwner));
                         command.Parameters.Add(new SqlParameter("@categori", categori));
+                        command.Parameters.Add(new SqlParameter("@Region", Region));
 
                         conn.Open();
                         using (SqlDataReader reader = await command.ExecuteReaderAsync())

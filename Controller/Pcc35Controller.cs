@@ -426,7 +426,7 @@ namespace WEBAPI_Bravo.Controller
 
         //}
 
-        [Authorize]
+         [Authorize]
         [HttpPost("UpdateTicket")]
         public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
         {
@@ -435,100 +435,47 @@ namespace WEBAPI_Bravo.Controller
 
             try
             {
-                var apiSettings = _configuration.GetSection("ApiSettings").Get<ApiSettings>();
-                string outputPath = apiSettings.OutputPath;
-
-                if (request.Files == null || !request.Files.Any())
-                    return BadRequest("Tidak ada file yang dikirim.");
-
-                // Gabungan string dari request.Files[0]
-                string base64Combined = request.Files.FirstOrDefault();
-
-                // 1. Bersihkan newline dari seluruh string
-                base64Combined = base64Combined.Replace("\r", "").Replace("\n", "").Replace(" ", "");
-
-                // 2. Pecah jadi list per "data:" prefix
-                var base64Files = Regex.Matches(base64Combined, @"data:[\s\S]+?(?=data:|$)", RegexOptions.IgnoreCase)
-                    .Cast<Match>()
-                    .Select(m => m.Value.Trim())
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
-                    .ToList();
-
-                if (base64Files.Count == 0)
-                    return BadRequest("Tidak ditemukan file base64 yang valid.");
-
                 var savedFiles = new List<string>();
+                var filesBase64WithName = new StringBuilder();
                 int index = 1;
 
-                foreach (var base64StringRaw in base64Files)
+                foreach (var file in request.Files)
                 {
-                    string base64String = base64StringRaw;
-                    string extension = ".bin";
-                    string mimeType = null;
+                    if (file == null || string.IsNullOrWhiteSpace(file.attachment_base64))
+                        continue;
 
-                    // 3. Deteksi MIME type dan tentukan ekstensi
-                    if (base64String.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                    string cleanedBase64 = file.attachment_base64
+                        .Replace("\r", "")
+                        .Replace("\n", "")
+                        .Replace(" ", "")
+                        .Replace("\"", "");
+
+                    if (cleanedBase64.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
                     {
-                        var match = Regex.Match(base64String, @"data:(?<mime>[\w\-/\.]+);base64,", RegexOptions.IgnoreCase);
-                        if (match.Success)
-                        {
-                            mimeType = match.Groups["mime"].Value;
-                            extension = mimeType switch
-                            {
-                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => ".xlsx",
-                                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => ".docx",
-                                "application/pdf" => ".pdf",
-                                "image/jpeg" => ".jpg",
-                                "image/png" => ".png",
-                                "application/msword" => ".doc",
-                                "text/plain" => ".txt",
-                                _ => ".bin"
-                            };
-                        }
-
-                        // Hapus prefix data:...;base64,
-                        base64String = base64String.Substring(base64String.IndexOf(',') + 1);
+                        int commaIndex = cleanedBase64.IndexOf(',');
+                        if (commaIndex > -1)
+                            cleanedBase64 = cleanedBase64.Substring(commaIndex + 1);
                     }
 
-                    // 4. Padding base64 jika kurang
-                    //int mod = base64String.Length % 4;
-                    //if (mod != 0)
-                    //    base64String = base64String.PadRight(base64String.Length + (4 - mod), '=');
+                    string extension = file.attachment_type ?? ".bin";
+                    string fileNameOnly = $"{file.attachment_name}{extension}";
+                   
+                   
+                    filesBase64WithName.Append($"{fileNameOnly}::{cleanedBase64},");
 
-                    byte[] fileBytes;
-                    try
-                    {
-                        fileBytes = Convert.FromBase64String(base64String.TrimEnd(','));
-                    }
-                    catch (FormatException ex)
-                    {
-                        return BadRequest($"File ke-{index} base64 tidak valid: {ex.Message}");
-                    }
-
-                    // 5. Simpan file ke disk
-                    string fileName = $"{request.TicketId}_{DateTime.Now:ddMM_HHmm_fff}_{index}{extension}";
-                    string fullPath = Path.Combine(outputPath, fileName);
-                    string folderPath = Path.GetDirectoryName(fullPath);
-                    if (!Directory.Exists(folderPath))
-                        Directory.CreateDirectory(folderPath);
-
-                    System.IO.File.WriteAllBytes(fullPath, fileBytes);
-                    savedFiles.Add(fullPath);
-
-                    var _ticketNumber = new SqlParameter("@TicketNumber", request.TicketId);
-                    var _status = new SqlParameter("@Status", request.StatusName ?? "");
-                    var _feedback = new SqlParameter("@Feedback", request.Feedback ?? "");
-                    var _files = new SqlParameter("@Files", base64String.TrimEnd(',')); // atau gabung path
-
-                    var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
-                        "EXEC PTM_ResolveTicketSitika @TicketNumber, @Status, @Feedback, @Files",
-                        _ticketNumber, _status, _feedback, _files
-                    );
                     index++;
                 }
 
-                // 6. Kirim ke Stored Procedure (ambil salah satu atau digabung path-nya)
-                
+                var _ticketNumber = new SqlParameter("@TicketNumber", request.TicketId);
+                var _status = new SqlParameter("@Status", request.StatusName ?? "");
+                var _feedback = new SqlParameter("@Feedback", request.Feedback ?? "");
+
+                var _files = new SqlParameter("@Files", filesBase64WithName.ToString().TrimEnd(','));
+
+                var result = await _Crmcontext.Database.ExecuteSqlRawAsync(
+                    "EXEC PTM_ResolveTicketSitika @TicketNumber, @Status, @Feedback, @Files",
+                    _ticketNumber, _status, _feedback, _files
+                );
 
                 return Ok(new
                 {
@@ -543,6 +490,7 @@ namespace WEBAPI_Bravo.Controller
                 return StatusCode(500, new { Message = "Error updating ticket", Error = ex.Message });
             }
         }
+
 
 
         [HttpGet]
@@ -671,8 +619,14 @@ public class ResolveTicket
     public string TicketId { get; set; }
     public string StatusName { get; set; }
     public string Feedback { get; set; }
-    public List<string> Files { get; set; }
+    public List<AttachmentFile> Files { get; set; }
 
+}
+public class AttachmentFile
+{
+    public string attachment_base64 { get; set; }
+    public string attachment_name { get; set; }
+    public string attachment_type { get; set; }
 }
 public class ApiSettings
 {
