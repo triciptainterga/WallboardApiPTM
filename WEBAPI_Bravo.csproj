@@ -5,7 +5,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Model\Omnix\**" />
+    <Content Remove="Model\Omnix\**" />
+    <EmbeddedResource Remove="Model\Omnix\**" />
+    <None Remove="Model\Omnix\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Controller\ExecutiveMonitoringController123.cs" />
+    <Compile Remove="Model\On4Context.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -13,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.17" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.17" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="5.0.17">

@@ -22,24 +22,26 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using WEBAPI_Bravo.Model;
 
+
 namespace WEBAPI_Bravo.Controller
 {
     [Route("api/[controller]")]
     [ApiController]
     public class Pcc35Controller : ControllerBase
     {
-        private readonly pcc135Context _context;
+        private readonly OmnixContext _context;
         private readonly CrmContext _Crmcontext;
         private readonly IConfiguration _configuration;
         private readonly IJwtService _jwtService;
         private static readonly string key = "0123456789abcdef"; // 16 karakter untuk AES-128
 
-        public Pcc35Controller(pcc135Context context, CrmContext Crmcontext, IConfiguration configuration, IJwtService jwtService)
+        public Pcc35Controller(OmnixContext context, CrmContext Crmcontext, IConfiguration configuration, IJwtService jwtService)
         {
             _context = context;
             _Crmcontext = Crmcontext;
             _configuration = configuration;
             _jwtService = jwtService;
+           // _omnixDbContext = OmixDbContext;
 
 
 
@@ -66,6 +68,62 @@ namespace WEBAPI_Bravo.Controller
         }
 
 
+        [ApiController]
+        [Route("api/[controller]")]
+        public class TicketController : ControllerBase
+        {
+            private readonly HttpClient _httpClient;
+            private const string Token = "0f09889a2890428bbfff1b8d3a1b3f675418e970d37b444b893b8d2b9669efb3";
+            private const string ApiUrl = "https://ptmkpesbapidev.pertamina.com/api/ppn/ticketing-system/v1/ticket";
+
+            public TicketController(IHttpClientFactory httpClientFactory)
+            {
+                _httpClient = httpClientFactory.CreateClient();
+                _httpClient.Timeout = TimeSpan.FromMinutes(5);
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+            }
+
+            [HttpPost("createTicketNew")]
+            public async Task<IActionResult> CreateTicketNew([FromBody] TicketRequest requestBody)
+            {
+                if (requestBody == null)
+                {
+                    return BadRequest("Request body is null.");
+                }
+
+                var json = JsonConvert.SerializeObject(requestBody);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                try
+                {
+                    var response = await _httpClient.PostAsync(ApiUrl, content);
+                    var responseContent = await response.Content.ReadAsStringAsync();
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var result = JsonConvert.DeserializeObject<object>(responseContent);
+                        return Ok(result);
+                    }
+                    else
+                    {
+                        return BadRequest($"Failed to create ticket. Status code: {(int)response.StatusCode}. Response: {responseContent}");
+                    }
+                }
+                catch (TaskCanceledException ex) when (!ex.CancellationToken.IsCancellationRequested)
+                {
+                    return StatusCode(504, "Request timed out. The server took too long to respond.");
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, $"Internal server error: {ex.Message}");
+                }
+            }
+        }
+
+
+
+
+
         [HttpPost]
         [Route("createTicket")]
         public async Task<IActionResult> CreateTicket([FromBody] TicketRequest requestBody)
@@ -79,28 +137,10 @@ namespace WEBAPI_Bravo.Controller
                 return BadRequest("Failed to get access token.");
             }
 
-            //using (var client = new HttpClient())
-            //{
-            //    client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
-
-            //    var jsonContent = JsonConvert.SerializeObject(requestBody);
-            //    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-            //    // Kirim POST request ke ticketing system
-            //    var response = await client.PostAsync(apiSettings.UrlTicket, content);
-
-            //    if (response.IsSuccessStatusCode)
-            //    {
-            //        var result = await response.Content.ReadAsStringAsync();
-            //        return Ok(result);
-            //    }
-            //    else
-            //    {
-            //        return BadRequest("Failed to create ticket.");
-            //    }
-            //}
+          
             using (var client = new HttpClient())
             {
+                
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
                 var jsonContent = JsonConvert.SerializeObject(requestBody);
@@ -127,6 +167,8 @@ namespace WEBAPI_Bravo.Controller
                 }
             }
         }
+
+
 
 
         [HttpGet]
@@ -190,8 +232,8 @@ namespace WEBAPI_Bravo.Controller
         }
 
 
-      
-     
+
+
 
         [HttpGet]
         [Route("GetTicketDetail")]
@@ -426,7 +468,7 @@ namespace WEBAPI_Bravo.Controller
 
         //}
 
-         [Authorize]
+        [Authorize]
         [HttpPost("UpdateTicket")]
         public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
         {
@@ -459,8 +501,8 @@ namespace WEBAPI_Bravo.Controller
 
                     string extension = file.attachment_type ?? ".bin";
                     string fileNameOnly = $"{file.attachment_name}{extension}";
-                   
-                   
+
+
                     filesBase64WithName.Append($"{fileNameOnly}::{cleanedBase64},");
 
                     index++;
@@ -496,36 +538,35 @@ namespace WEBAPI_Bravo.Controller
         [HttpGet]
         [Route("GetTicketByCustomerId")]
         public async Task<ActionResult<IEnumerable<Ticket>>> GetTickets(int CustomerId, int limit = 10, int offset = 0)
-                        {
-                          try
-                {
-                    var result = await _context.Tickets
-                        .Where(t => t.CustId == CustomerId)  
-                        .Include(t => t.Status)     
-                        .Include(t => t.CreatedByNavigation)
-                        .Select(t => new TaskDisplayDto
-                        {
-                            Id = t.Id,
-                            StatusId = t.StatusId,
-                            Status = t.Status.Name,
-                            CreatedBy = t.CreatedBy.ToString(),
-                            DateCreated = t.DateCreate
-                        })
-                        .Skip(offset)  
-                        .Take(limit)  
-                        .ToListAsync();
+        {
+            try
+            {
+                var result = await _context.Tickets
+                    .Where(t => t.CustId == CustomerId)
+                    .Include(t => t.Status)
+                    .Select(t => new TaskDisplayDto
+                    {
+                        Id = t.Id,
+                        StatusId = t.StatusId,
+                        Status = t.Status.Name,
+                        CreatedBy = t.CreatedBy.ToString(),
+                        DateCreated = t.DateCreate
+                    })
+                    .Skip(offset)
+                    .Take(limit)
+                    .ToListAsync();
 
-                    return Ok(result);
-                }
-                catch (Exception ex)
-                {
-                    // Log the exception (you can use a logging framework like Serilog or log to a file)
-                    // For example, if you're using console logging, you can do something like:
-                    Console.WriteLine($"Error occurred: {ex.Message}");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (you can use a logging framework like Serilog or log to a file)
+                // For example, if you're using console logging, you can do something like:
+                Console.WriteLine($"Error occurred: {ex.Message}");
 
-                    // Return an appropriate error message to the client
-                    return StatusCode(500, new { message = "An error occurred while fetching the data.", error = ex.Message });
-                }
+                // Return an appropriate error message to the client
+                return StatusCode(500, new { message = "An error occurred while fetching the data.", error = ex.Message });
+            }
         }
 
 
@@ -560,26 +601,26 @@ namespace WEBAPI_Bravo.Controller
                ticketHistoryStatusUserCategory.ticket.Id,
                ticketHistoryStatusUserCategory.history.TicketId,
                ticketHistoryStatusUserCategory.ticket.CategoryId,
-               Category = ticketHistoryStatusUserCategory.category.Level2, 
-               MainCategory = mainCategory.Name,  
+               Category = ticketHistoryStatusUserCategory.category.Level2,
+               MainCategory = mainCategory.Name,
                ticketHistoryStatusUserCategory.ticket.Subject,
                ticketHistoryStatusUserCategory.ticket.Remark,
                ticketHistoryStatusUserCategory.ticket.StatusId,
-               Status = ticketHistoryStatusUserCategory.status.Name, 
+               Status = ticketHistoryStatusUserCategory.status.Name,
                ticketHistoryStatusUserCategory.ticket.CreatedBy,
-               UserName = ticketHistoryStatusUserCategory.user.Fullname, 
+               UserName = ticketHistoryStatusUserCategory.user.Fullname,
                ticketHistoryStatusUserCategory.ticket.DateCreate,
                ticketHistoryStatusUserCategory.ticket.DateClose
            })
      .Where(t => t.TicketId == ticketId)
-      .Skip(offset)  
-        .Take(limit)   
+      .Skip(offset)
+        .Take(limit)
      .ToListAsync();
             return Ok(result);
         }
 
 
-      
+
     }
 
 
@@ -610,7 +651,7 @@ public class TaskDisplayDto
 }
 public class ResolveTicket
 {
-   
+
     //public string TicketNumber { get; set; }
     //public string Status { get; set; }
     //public string CreatedBy { get; set; }
@@ -663,7 +704,14 @@ public class TicketRequest
     public string sortfield { get; set; }
     public string created_by { get; set; }
     public List<CustomField> custom_field { get; set; }
-    public List<string> File { get; set; }
+    public List<Attachment> file { get; set; }
+}
+
+public class Attachment
+{
+    public string attachment_base64 { get; set; }
+    public string attachment_name { get; set; }
+    public string attachment_type { get; set; }
 }
 public class TokenResponse
 {

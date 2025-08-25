@@ -1543,3 +1543,4 @@ C:\2025ApiPertamina\WallboardApiPTM\obj\Debug\net5.0\WEBAPI_Bravo.dll
 C:\2025ApiPertamina\WallboardApiPTM\obj\Debug\net5.0\ref\WEBAPI_Bravo.dll
 C:\2025ApiPertamina\WallboardApiPTM\obj\Debug\net5.0\WEBAPI_Bravo.pdb
 C:\2025ApiPertamina\WallboardApiPTM\obj\Debug\net5.0\WEBAPI_Bravo.genruntimeconfig.cache
+C:\2025ApiPertamina\WallboardApiPTM\bin\Debug\net5.0\Dapper.dll

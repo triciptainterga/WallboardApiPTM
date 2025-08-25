@@ -21,11 +21,11 @@ namespace WEBAPI_Bravo.Controller
     [ApiController]
     public class TenantController : ControllerBase
     {
-        private readonly pcc135Context _context;
+        private readonly OmnixContext _context;
         private readonly CrmContext _Crmcontext;
         private readonly IConfiguration _configuration;
 
-        public TenantController(pcc135Context context, CrmContext Crmcontext, IConfiguration configuration)
+        public TenantController(OmnixContext context, CrmContext Crmcontext, IConfiguration configuration)
         {
             _context = context;
             _Crmcontext = Crmcontext;

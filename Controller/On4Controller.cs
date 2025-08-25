@@ -1,12 +1,16 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿
+using Dapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -20,13 +24,11 @@ namespace WEBAPI_Bravo.Controller
     [ApiController]
     public class On4Controller : ControllerBase
     {
-        private readonly on4Context _context;
-        private readonly CrmContext _Crmcontext;
+         private readonly CrmContext _Crmcontext;
         private readonly IConfiguration _configuration;
 
-        public On4Controller(on4Context context, CrmContext Crmcontext, IConfiguration configuration)
+        public On4Controller(CrmContext Crmcontext, IConfiguration configuration)
         {
-            _context = context;
             _Crmcontext = Crmcontext;
             _configuration = configuration;
 
@@ -34,93 +36,63 @@ namespace WEBAPI_Bravo.Controller
 
         }
 
-       
+
 
 
         [HttpGet]
         [Route("GetTicketByCustomerId")]
-        public async Task<ActionResult<IEnumerable<Ticket>>> GetTickets(int CustomerId, int limit = 10, int offset = 0)
-                        {
-                          try
-                {
-                    var result = await _context.Tickets
-                        .Where(t => t.CustId == CustomerId)  
-                        .Include(t => t.Status)     
-                        .Include(t => t.CreatedByNavigation)
-                        .Select(t => new TaskDisplayDto
-                        {
-                            Id = t.Id,
-                            StatusId = t.StatusId,
-                            Status = t.Status.Name,
-                            CreatedBy = t.CreatedBy.ToString(),
-                            DateCreated = t.DateCreate
-                        })
-                        .Skip(offset)  
-                        .Take(limit)  
-                        .ToListAsync();
-
-                    return Ok(result);
-                }
-                catch (Exception ex)
-                {
-                    // Log the exception (you can use a logging framework like Serilog or log to a file)
-                    // For example, if you're using console logging, you can do something like:
-                    Console.WriteLine($"Error occurred: {ex.Message}");
-
-                    // Return an appropriate error message to the client
-                    return StatusCode(500, new { message = "An error occurred while fetching the data.", error = ex.Message });
-                }
-        }
-
-
-        [HttpGet]
-        [Route("GetTicketDetailByTicketId")]
-
-
-        public async Task<ActionResult<IEnumerable<Ticket>>> GetDetailTickets(int ticketId, int limit = 10, int offset = 0)
+        public async Task<ActionResult<IEnumerable<TransTicket>>> GetTickets(long CustomerId)
         {
-            var result = await _context.Tickets
-     .Join(_context.TicketHistories,
-           ticket => ticket.Id,
-           history => history.TicketId,
-           (ticket, history) => new { ticket, history })
-     .Join(_context.MTicketStatuses,
-           ticketHistory => ticketHistory.ticket.StatusId,
-           status => status.Id,
-           (ticketHistory, status) => new { ticketHistory.ticket, ticketHistory.history, status })
-     .Join(_context.Users,
-           ticketHistoryStatus => ticketHistoryStatus.ticket.CreatedBy,
-           user => user.Id,
-           (ticketHistoryStatus, user) => new { ticketHistoryStatus.ticket, ticketHistoryStatus.history, ticketHistoryStatus.status, user })
-     .Join(_context.MCategories,
-           ticketHistoryStatusUser => ticketHistoryStatusUser.ticket.CategoryId,
-           category => category.Id,
-           (ticketHistoryStatusUser, category) => new { ticketHistoryStatusUser.ticket, ticketHistoryStatusUser.history, ticketHistoryStatusUser.status, ticketHistoryStatusUser.user, category })
-     .Join(_context.MCategoryMains,
-           category => category.category.MainCategoryId,
-           mainCategory => mainCategory.Id,
-           (ticketHistoryStatusUserCategory, mainCategory) => new
-           {
-               ticketHistoryStatusUserCategory.ticket.Id,
-               ticketHistoryStatusUserCategory.history.TicketId,
-               ticketHistoryStatusUserCategory.ticket.CategoryId,
-               Category = ticketHistoryStatusUserCategory.category.Level2, 
-               MainCategory = mainCategory.Name,  
-               ticketHistoryStatusUserCategory.ticket.Subject,
-               ticketHistoryStatusUserCategory.ticket.Remark,
-               ticketHistoryStatusUserCategory.ticket.StatusId,
-               Status = ticketHistoryStatusUserCategory.status.Name, 
-               ticketHistoryStatusUserCategory.ticket.CreatedBy,
-               UserName = ticketHistoryStatusUserCategory.user.Fullname, 
-               ticketHistoryStatusUserCategory.ticket.DateCreate,
-               ticketHistoryStatusUserCategory.ticket.DateClose
-           })
-     .Where(t => t.TicketId == ticketId)
-      .Skip(offset)  
-        .Take(limit)   
-     .ToListAsync();
-            return Ok(result);
+            var connectionString = _configuration.GetConnectionString("On4Connection");
+
+            try
+            {
+                using var connection = new MySqlConnection(connectionString);
+
+                // Cek koneksi ke database
+                try
+                {
+                    await connection.OpenAsync();
+                    Console.WriteLine("Koneksi ke database berhasil.");
+                }
+                catch (Exception dbEx)
+                {
+                    // Gagal konek ke database
+                    return StatusCode(500, new { message = "Gagal koneksi ke database.", error = dbEx.Message });
+                }
+
+                    var sql = @"
+                    SELECT 
+                        c.*
+                    FROM interaction_header_history a
+                    JOIN cwc b ON b.session_id = a.session_id
+                    JOIN trans_ticket c ON c.ticket_id = b.ticket_id
+                    JOIN m_category d ON d.category_id = c.category_id
+                    JOIN m_sub_category e ON e.sub_category_id = c.sub_category_id
+                    WHERE b.create_ticket = 1
+                      AND d.is_active = 1
+                      AND a.cust_id = @CustomerId
+                    LIMIT 10;
+                ";
+
+                var result = await connection.QueryAsync<TransTicket>(
+                    sql,
+                    new { CustomerId }
+                );
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Terjadi kesalahan saat mengambil data.", error = ex.Message });
+            }
+
         }
+
+
+
+
+
     }
 }
 

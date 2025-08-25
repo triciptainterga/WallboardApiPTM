@@ -5,6 +5,7 @@ C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\PubTmp\Out\WEBAPI_Bravo.d
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\PubTmp\Out\WEBAPI_Bravo.runtimeconfig.json
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\PubTmp\Out\WEBAPI_Bravo.pdb
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\PubTmp\Out\BouncyCastle.Crypto.dll
+C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\PubTmp\Out\Dapper.dll
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\PubTmp\Out\Google.Protobuf.dll
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\PubTmp\Out\Humanizer.dll
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\PubTmp\Out\K4os.Compression.LZ4.dll

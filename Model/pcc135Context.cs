@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace WEBAPI_Bravo.Model
 {
-    public partial class pcc135Context : DbContext
+    public partial class OmnixContext : DbContext
     {
-        public pcc135Context()
+        public OmnixContext()
         {
         }
 
-        public pcc135Context(DbContextOptions<pcc135Context> options)
+        public OmnixContext(DbContextOptions<OmnixContext> options)
             : base(options)
         {
         }

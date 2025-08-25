@@ -23,14 +23,14 @@ namespace WEBAPI_Bravo.Controller
     [ApiController]
     public class DataAvayaController : ControllerBase
     {
-        private readonly pcc135Context _context;
+        private readonly OmnixContext _context;
         private readonly iDetailServices _detailServices;
         private readonly string _CrmconnectionString;
         private readonly IConfiguration _configuration;
 
 
 
-        public DataAvayaController(pcc135Context context, iDetailServices DetailServices, IConfiguration configuration)
+        public DataAvayaController(OmnixContext context, iDetailServices DetailServices, IConfiguration configuration)
         {
             _context = context;
             _detailServices = DetailServices;

@@ -168,6 +168,7 @@ C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\WEBAPI_Bravo.dll
 C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\ref\WEBAPI_Bravo.dll
 C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\WEBAPI_Bravo.pdb
 C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\BouncyCastle.Crypto.dll
+C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\Dapper.dll
 C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\Google.Protobuf.dll
 C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\Humanizer.dll
 C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\K4os.Compression.LZ4.dll
@@ -297,7 +298,6 @@ C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\runtimes\win-arm64\lib\ne
 C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\runtimes\win\lib\netstandard2.0\System.Runtime.Caching.dll
 C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\runtimes\win\lib\netstandard2.0\System.Security.AccessControl.dll
 C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\runtimes\win\lib\netstandard2.0\System.Security.Cryptography.ProtectedData.dll
-C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\WEBAPI_Bravo.csproj.AssemblyReference.cache
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\WEBAPI_Bravo.GeneratedMSBuildEditorConfig.editorconfig
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\WEBAPI_Bravo.AssemblyInfoInputs.cache
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\WEBAPI_Bravo.AssemblyInfo.cs
@@ -313,3 +313,4 @@ C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\WEBAPI_Bravo.dll
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\ref\WEBAPI_Bravo.dll
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\WEBAPI_Bravo.pdb
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\WEBAPI_Bravo.genruntimeconfig.cache
+C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\WEBAPI_Bravo.csproj.AssemblyReference.cache

@@ -17,6 +17,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using WEBAPI_Bravo.Model;
+//using WEBAPI_Bravo.Model.Omnix;
 using WEBAPI_Bravo.Services;
 
 
@@ -36,12 +37,19 @@ namespace WEBAPI_Bravo
 
             services.AddHttpClient(); // <--- ini penting
             services.AddControllers();
-            services.AddDbContext<pcc135Context>(options =>
+            services.AddDbContext<OmnixContext>(options =>
                  options.UseMySQL(
-                     Configuration.GetConnectionString("DefaultConnection")
+                     Configuration.GetConnectionString("OmnixConnection")
                     
                  )
              );
+
+            //services.AddDbContext<OmixDbContext>(options =>
+            //     options.UseMySQL(
+            //         Configuration.GetConnectionString("OmnixConnection")
+
+            //     )
+            // );
 
             services.AddDbContext<sqlContext>(options =>
       options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection2")));
@@ -49,6 +57,7 @@ namespace WEBAPI_Bravo
             services.AddDbContext<CrmContext>(options =>
    options.UseSqlServer(Configuration.GetConnectionString("CrmConnection")));
 
+            
 
 
 
@@ -172,8 +181,8 @@ namespace WEBAPI_Bravo
             app.UseSwaggerUI(c =>
             {
             // c.SwaggerEndpoint("/APIWallboardPtm/swagger/v1/swagger.json", "Syntera API V1");
-             //   c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
-             c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
+            //   c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
+               c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
             });
         }
     }
