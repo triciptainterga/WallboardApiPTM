@@ -181,11 +181,12 @@ namespace WEBAPI_Bravo
             app.UseSwaggerUI(c =>
             {
             // c.SwaggerEndpoint("/APIWallboardPtm/swagger/v1/swagger.json", "Syntera API V1");
-            //   c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
-               c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
+               c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
+             //  c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
             });
         }
     }
 
 
 }
+

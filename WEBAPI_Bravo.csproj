@@ -12,7 +12,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Controller\CMSReportController .cs" />
+    <Compile Remove="Controller\DailyMonitoringController.cs" />
+    <Compile Remove="Controller\DashboardMonitoringController.cs" />
     <Compile Remove="Controller\ExecutiveMonitoringController123.cs" />
+    <Compile Remove="Controller\WallboadCustomeController.cs" />
     <Compile Remove="Model\On4Context.cs" />
   </ItemGroup>
 
