@@ -154,6 +154,36 @@ namespace WEBAPI_Bravo
 
 
 
+            //app.UseCors("AllowAllOrigins");
+            //app.UseRouting();
+
+
+
+            //app.UseAuthentication();
+            //app.UseAuthorization();
+
+            //app.UseEndpoints(endpoints =>
+            //{
+
+            //    endpoints.MapControllers();
+
+
+            //    // Schedule the job
+
+            //});
+
+            //// Enable Swagger
+            //app.UseSwagger();
+
+            //// Enable CORS
+
+            //// Enable Swagger UI
+            //app.UseSwaggerUI(c =>
+            //{
+            //// c.SwaggerEndpoint("/APIWallboardPtm/swagger/v1/swagger.json", "Syntera API V1");
+            //  c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
+            //  // c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
+            //});
             app.UseCors("AllowAllOrigins");
             app.UseRouting();
 
@@ -180,9 +210,9 @@ namespace WEBAPI_Bravo
             // Enable Swagger UI
             app.UseSwaggerUI(c =>
             {
-            // c.SwaggerEndpoint("/APIWallboardPtm/swagger/v1/swagger.json", "Syntera API V1");
-               c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
-             //  c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
+                // c.SwaggerEndpoint("/APIWallboardPtm/swagger/v1/swagger.json", "Syntera API V1");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Syntera API V1");
+                // c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
             });
         }
     }

@@ -56,8 +56,9 @@ namespace WEBAPI_Bravo.Controller
 
                 using (var httpClient = new HttpClient())
                 {
-                    var url = "https://api-dev.mypertamina.id/partner/api/v1/auth/token";
 
+                    var url = _configuration["ApiSettings:AuthTokenUrl"];
+               
                     var payload = new
                     {
                         mobileNumber = request.mobileNumber,

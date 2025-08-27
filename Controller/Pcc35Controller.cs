@@ -123,7 +123,7 @@ namespace WEBAPI_Bravo.Controller
 
 
 
-
+        [Authorize]
         [HttpPost]
         [Route("createTicket")]
         public async Task<IActionResult> CreateTicket([FromBody] TicketRequest requestBody)
@@ -137,7 +137,66 @@ namespace WEBAPI_Bravo.Controller
                 return BadRequest("Failed to get access token.");
             }
 
-          
+            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".jpg", ".png"
+            };
+
+            const int maxFileCount = 5;
+            const int maxFileSizeInBytes = 5 * 1024 * 1024; // 5 MB
+
+            if (requestBody.file != null)
+            {
+                if (requestBody.file.Count > maxFileCount)
+                {
+                    return BadRequest($"Maksimum jumlah file yang diperbolehkan adalah {maxFileCount}.");
+                }
+
+                foreach (var file in requestBody.file)
+                {
+                    // Validasi ekstensi file
+                    var extension = Path.GetExtension(file.attachment_name);
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        return BadRequest($"File \"{file.attachment_name}\" memiliki ekstensi tidak diperbolehkan.");
+                    }
+
+                    // Validasi ukuran file dari base64
+                    if (!string.IsNullOrEmpty(file.attachment_base64))
+                    {
+                        try
+                        {
+                            var base64Data = file.attachment_base64;
+
+                            // Jika base64 data mengandung prefix seperti "data:application/pdf;base64,...", hapus prefix-nya
+                            var commaIndex = base64Data.IndexOf(',');
+                            if (commaIndex >= 0)
+                            {
+                                base64Data = base64Data.Substring(commaIndex + 1);
+                            }
+
+                            var fileBytes = Convert.FromBase64String(base64Data);
+
+                            if (fileBytes.Length > maxFileSizeInBytes)
+                            {
+                                return BadRequest($"Ukuran file \"{file.attachment_name}\" melebihi batas maksimum 5 MB.");
+                            }
+                        }
+                        catch
+                        {
+                            return BadRequest($"File \"{file.attachment_name}\" tidak valid (bukan base64 yang benar).");
+                        }
+                    }
+                    else
+                    {
+                        return BadRequest($"File \"{file.attachment_name}\" tidak memiliki konten base64.");
+                    }
+                }
+            }
+
+
+
+
             using (var client = new HttpClient())
             {
                 
@@ -170,7 +229,7 @@ namespace WEBAPI_Bravo.Controller
 
 
 
-
+        [Authorize]
         [HttpGet]
         [Route("GetTicketList")]
         public async Task<IActionResult> GetTickets([FromQuery] string category, [FromQuery] int page, [FromQuery] int size)
@@ -234,7 +293,7 @@ namespace WEBAPI_Bravo.Controller
 
 
 
-
+        [Authorize]
         [HttpGet]
         [Route("GetTicketDetail")]
         public async Task<IActionResult> GetTicketDetail([FromQuery] string ticket_id)
@@ -475,6 +534,34 @@ namespace WEBAPI_Bravo.Controller
             if (request == null || string.IsNullOrEmpty(request.TicketId))
                 return BadRequest("Invalid request");
 
+          
+            // Validasi tiap field wajib
+          
+            if (string.IsNullOrWhiteSpace(request.StatusName))
+                return BadRequest("StatusName tidak boleh kosong.");
+
+            if (string.IsNullOrWhiteSpace(request.Feedback))
+                return BadRequest("Feedback tidak boleh kosong.");
+
+          
+            if (string.IsNullOrWhiteSpace(request.Feedback))
+                return BadRequest("Feedback tidak boleh kosong.");
+
+
+
+
+            if (request.Feedback != "Resolve")
+                return BadRequest("StatusName tidak valid.");
+
+            if (request.StatusName.Length > 50)
+                return BadRequest("StatusName tidak boleh lebih dari 10.");
+
+            if (request.StatusName.Length > 50)
+                return BadRequest("Feedback tidak boleh lebih dari 50.");
+
+
+
+
             try
             {
                 var savedFiles = new List<string>();
@@ -534,13 +621,19 @@ namespace WEBAPI_Bravo.Controller
         }
 
 
-
+        [Authorize]
         [HttpGet]
         [Route("GetTicketByCustomerId")]
         public async Task<ActionResult<IEnumerable<Ticket>>> GetTickets(int CustomerId, int limit = 10, int offset = 0)
         {
             try
             {
+
+                if (limit > 20)
+                {
+                    return BadRequest(new { message = "Limit tidak boleh lebih dari 20." });
+                }
+
                 var result = await _context.Tickets
                     .Where(t => t.CustId == CustomerId)
                     .Include(t => t.Status)
@@ -569,13 +662,20 @@ namespace WEBAPI_Bravo.Controller
             }
         }
 
-
+        [Authorize]
         [HttpGet]
         [Route("GetTicketDetailByTicketId")]
 
 
         public async Task<ActionResult<IEnumerable<Ticket>>> GetDetailTickets(int ticketId, int limit = 10, int offset = 0)
         {
+
+            if (limit > 20)
+            {
+                return BadRequest(new { message = "Limit tidak boleh lebih dari 20." });
+            }
+
+
             var result = await _context.Tickets
      .Join(_context.TicketHistories,
            ticket => ticket.Id,
