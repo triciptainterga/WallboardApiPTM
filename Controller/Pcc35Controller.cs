@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
@@ -130,6 +131,82 @@ namespace WEBAPI_Bravo.Controller
         {
             var apiSettings = _configuration.GetSection("ApiSettings").Get<ApiSettings>();
 
+            // Buat method helper agar tidak ngulang-ngulang
+            bool IsValidText(string input) =>
+                !string.IsNullOrWhiteSpace(input) &&
+                input.Length <= 50 &&
+                Regex.IsMatch(input, @"^[a-zA-Z0-9\s]+$");
+
+            bool IsValidTextNonNull(string input) =>
+               input.Length <= 50 &&
+               Regex.IsMatch(input, @"^[a-zA-Z0-9\s]+$");
+
+            // Validasi setiap properti
+            if (!IsValidText(requestBody.category_id))
+                return StatusCode(422, new { error = "Category ID tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
+
+            if (!IsValidText(requestBody.title))
+                return StatusCode(422, new { error = "Title tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
+
+            if (!IsValidText(requestBody.assigne_group))
+                return StatusCode(422, new { error = "Assignee Group tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
+
+            if (!IsValidTextNonNull(requestBody.assigne_user))
+                return StatusCode(422, new { error = "Assignee User tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
+
+              if (!IsValidText(requestBody.ticket_description))
+                return StatusCode(422, new { error = "Deskripsi tiket tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
+
+          
+          
+
+            if (requestBody.custom_field != null)
+            {
+
+                foreach (var file in requestBody.custom_field)
+                {
+
+
+                    // custom_field_id tidak boleh kosong
+                    if (string.IsNullOrWhiteSpace(file.custom_field_id))
+                    {
+
+                        return StatusCode(422, new { error = "custom field tidak boleh kosong." });
+
+                    }
+                    else if (!Guid.TryParse(file.custom_field_id, out _))
+                    {
+                        return StatusCode(422, new { error = "custom field harus GUID yang valid." });
+                    }
+
+                    // value tidak boleh kosong
+                    if (string.IsNullOrWhiteSpace(file.value))
+                    {
+                        return StatusCode(422, new { error = "value tidak boleh kosong." });
+                    }
+                    else
+                    {
+                        // value tidak boleh lebih dari 50 karakter
+                        if (file.value.Length > 50)
+                        {
+
+                            return StatusCode(422, new { error = "value maksimal 50 karakter." });
+                        }
+
+                        // value tidak boleh mengandung simbol
+                        if (!Regex.IsMatch(file.value, @"^[a-zA-Z0-9 ]*$"))
+                        {
+
+                            return StatusCode(422, new { error = "value tidak boleh mengandung simbol." });
+                        }
+                    }
+                }
+            }
+
+
+
+
+
             var accessToken = await GetAccessToken(apiSettings);
 
             if (string.IsNullOrEmpty(accessToken))
@@ -155,43 +232,64 @@ namespace WEBAPI_Bravo.Controller
                 foreach (var file in requestBody.file)
                 {
                     // Validasi ekstensi file
-                    var extension = Path.GetExtension(file.attachment_name);
+                    var extension = Path.GetExtension(file.attachment_type);
                     if (!allowedExtensions.Contains(extension))
                     {
-                        return BadRequest($"File \"{file.attachment_name}\" memiliki ekstensi tidak diperbolehkan.");
+                        return BadRequest($"File \"{file.attachment_name}{file.attachment_type}\" memiliki ekstensi tidak diperbolehkan.");
                     }
 
-                    // Validasi ukuran file dari base64
-                    if (!string.IsNullOrEmpty(file.attachment_base64))
+
+                    if (string.IsNullOrWhiteSpace(file.attachment_name))
+                        return StatusCode(422, new { error = "Nama file tidak boleh kosong." });
+
+                    if (!Regex.IsMatch(file.attachment_name, @"^[a-zA-Z0-9\s]+$"))
+                        return StatusCode(422, new { error = "Nama file tidak boleh ada simbol." });
+
+                    if (file.attachment_name.Length > 50)
+                        return StatusCode(422, new { error = "Nama file tidak boleh lebih dari 50 karakter." });
+
+                    // === Validasi attachment_type ===
+                    if (string.IsNullOrWhiteSpace(file.attachment_type))
+                        return StatusCode(422, new { error = "Tipe file tidak boleh kosong." });
+
+                    if (!Regex.IsMatch(file.attachment_type, @"^[a-zA-Z0-9\s]+$"))
+                        return StatusCode(422, new { error = "Tipe file tidak boleh ada simbol." });
+
+                    if (file.attachment_type.Length > 50)
+                        return StatusCode(422, new { error = "Tipe file tidak boleh lebih dari 50 karakter." });
+
+                    // === Validasi attachment_base64 ===
+                    if (string.IsNullOrWhiteSpace(file.attachment_base64))
+                        return StatusCode(422, new { error = "Data file (base64) tidak boleh kosong." });
+
+
+
+                    // Bersihkan base64
+                    string cleanedBase64 = file.attachment_base64
+                        .Replace("\r", "")
+                        .Replace("\n", "")
+                        .Replace(" ", "")
+                        .Replace("\"", "");
+
+                    // Hilangkan prefix "data:..."
+                    if (cleanedBase64.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
                     {
-                        try
+                        int commaIndex = cleanedBase64.IndexOf(',');
+                        if (commaIndex > -1)
                         {
-                            var base64Data = file.attachment_base64;
-
-                            // Jika base64 data mengandung prefix seperti "data:application/pdf;base64,...", hapus prefix-nya
-                            var commaIndex = base64Data.IndexOf(',');
-                            if (commaIndex >= 0)
-                            {
-                                base64Data = base64Data.Substring(commaIndex + 1);
-                            }
-
-                            var fileBytes = Convert.FromBase64String(base64Data);
-
-                            if (fileBytes.Length > maxFileSizeInBytes)
-                            {
-                                return BadRequest($"Ukuran file \"{file.attachment_name}\" melebihi batas maksimum 5 MB.");
-                            }
-                        }
-                        catch
-                        {
-                            return BadRequest($"File \"{file.attachment_name}\" tidak valid (bukan base64 yang benar).");
+                            cleanedBase64 = cleanedBase64.Substring(commaIndex + 1);
                         }
                     }
-                    else
+
+                    // Hitung ukuran file
+                    int fileSizeInBytes = (int)(Math.Ceiling((double)cleanedBase64.Length * 3 / 4));
+
+                    if (fileSizeInBytes > maxFileSizeInBytes)
                     {
-                        return BadRequest($"File \"{file.attachment_name}\" tidak memiliki konten base64.");
+                        return BadRequest($"Ukuran file \"{file.attachment_name}{file.attachment_type}\" melebihi batas maksimum 5MB.");
                     }
                 }
+
             }
 
 
@@ -234,6 +332,12 @@ namespace WEBAPI_Bravo.Controller
         [Route("GetTicketList")]
         public async Task<IActionResult> GetTickets([FromQuery] string category, [FromQuery] int page, [FromQuery] int size)
         {
+
+            if (size > 2000)
+            {
+                return StatusCode(422, new { error = "Size tidak boleh lebih dari 2000." });
+            }
+
             var apiSettings = _configuration.GetSection("ApiSettings").Get<ApiSettings>();
             var accessToken = await GetAccessToken(apiSettings);
 
@@ -518,7 +622,7 @@ namespace WEBAPI_Bravo.Controller
         //    }
         //    catch (Exception ex)
         //    {
-        //        return StatusCode(400, ex.ToString());
+        //        return StatusCode(422, ex.ToString());
 
         //    }
 
@@ -531,33 +635,67 @@ namespace WEBAPI_Bravo.Controller
         [HttpPost("UpdateTicket")]
         public async Task<IActionResult> PTM_ResolveTicketSitika([FromBody] ResolveTicket request)
         {
+
+
             if (request == null || string.IsNullOrEmpty(request.TicketId))
                 return BadRequest("Invalid request");
 
-          
+
             // Validasi tiap field wajib
-          
+
+
+
+            if (string.IsNullOrWhiteSpace(request.TicketId))
+                return StatusCode(422, new { error = "TicketId tidak boleh kosong." });
+
+            if (!Regex.IsMatch(request.TicketId, @"^\d+$"))
+                return StatusCode(422, new { error = "Ticket harus berupa number." });
+
+            if (request.TicketId.Length > 20)
+                return StatusCode(422, new { error = "Ticket  tidak boleh melebihi 10 karakter." });
+
+
             if (string.IsNullOrWhiteSpace(request.StatusName))
-                return BadRequest("StatusName tidak boleh kosong.");
+                return StatusCode(422, new { error = "StatusName tidak boleh kosong." });
+
+            if (request.StatusName.Length > 10)
+                return StatusCode(422, new { error = "Status tidak boleh melebihi 10 karakter." });
+            
+            if (!Regex.IsMatch(request.StatusName, @"^[a-zA-Z\s]*$"))
+            {
+                return StatusCode(422, new { error = "Format Status tidak valid (hanya huruf diperbolehkan)." });
+
+            }
+
+
+
+
+
+
+
+
+
 
             if (string.IsNullOrWhiteSpace(request.Feedback))
-                return BadRequest("Feedback tidak boleh kosong.");
-
-          
-            if (string.IsNullOrWhiteSpace(request.Feedback))
-                return BadRequest("Feedback tidak boleh kosong.");
+                return StatusCode(422, new { error = "Feedback tidak boleh kosong." });
 
 
+           
+            if (request.Feedback.Length > 50)
+                return StatusCode(422, new { error = "Feedback tidak boleh lebih dari 50 karakter." });
 
+
+
+            if (!Regex.IsMatch(request.Feedback, @"^[a-zA-Z\s]*$"))
+            {
+                return StatusCode(422, new { error = "Format Status tidak valid (hanya huruf diperbolehkan)." });
+
+            }
 
             if (request.Feedback != "Resolve")
-                return BadRequest("StatusName tidak valid.");
+                return StatusCode(422, "Feedback n tidak bisa sesuai."); // 422 Unprocessable Entity
 
-            if (request.StatusName.Length > 50)
-                return BadRequest("StatusName tidak boleh lebih dari 10.");
-
-            if (request.StatusName.Length > 50)
-                return BadRequest("Feedback tidak boleh lebih dari 50.");
+          
 
 
 
@@ -572,6 +710,32 @@ namespace WEBAPI_Bravo.Controller
                 {
                     if (file == null || string.IsNullOrWhiteSpace(file.attachment_base64))
                         continue;
+
+
+                    // === Validasi attachment_name ===
+                    if (string.IsNullOrWhiteSpace(file.attachment_name))
+                        return StatusCode(422, new { error = "Nama file tidak boleh kosong." });
+
+                    if (!Regex.IsMatch(file.attachment_name, @"^[a-zA-Z0-9\s]+$"))
+                        return StatusCode(422, new { error = "Nama file tidak boleh ada simbol." });
+
+                    if (file.attachment_name.Length > 50)
+                        return StatusCode(422, new { error = "Nama file tidak boleh lebih dari 50 karakter." });
+
+                    // === Validasi attachment_type ===
+                    if (string.IsNullOrWhiteSpace(file.attachment_type))
+                        return StatusCode(422, new { error = "Tipe file tidak boleh kosong." });
+
+                    if (!Regex.IsMatch(file.attachment_type, @"^[a-zA-Z0-9\s]+$"))
+                        return StatusCode(422, new { error = "Tipe file tidak boleh ada simbol." });
+
+                    if (file.attachment_type.Length > 50)
+                        return StatusCode(422, new { error = "Tipe file tidak boleh lebih dari 50 karakter." });
+
+                    // === Validasi attachment_base64 ===
+                    if (string.IsNullOrWhiteSpace(file.attachment_base64))
+                        return StatusCode(422, new { error = "Data file (base64) tidak boleh kosong." });
+
 
                     string cleanedBase64 = file.attachment_base64
                         .Replace("\r", "")
@@ -629,9 +793,9 @@ namespace WEBAPI_Bravo.Controller
             try
             {
 
-                if (limit > 20)
+                if (limit > 2000)
                 {
-                    return BadRequest(new { message = "Limit tidak boleh lebih dari 20." });
+                    return StatusCode(422, new { error = "limit tidak boleh lebih dari 2000." });
                 }
 
                 var result = await _context.Tickets
@@ -670,9 +834,9 @@ namespace WEBAPI_Bravo.Controller
         public async Task<ActionResult<IEnumerable<Ticket>>> GetDetailTickets(int ticketId, int limit = 10, int offset = 0)
         {
 
-            if (limit > 20)
+            if (limit > 2000)
             {
-                return BadRequest(new { message = "Limit tidak boleh lebih dari 20." });
+                return StatusCode(422, new { error = "Size tidak boleh lebih dari 2000." });
             }
 
 
@@ -752,22 +916,27 @@ public class TaskDisplayDto
 public class ResolveTicket
 {
 
-    //public string TicketNumber { get; set; }
-    //public string Status { get; set; }
-    //public string CreatedBy { get; set; }
-    //public string Description { get; set; }
-
     public string TicketId { get; set; }
+
     public string StatusName { get; set; }
+
     public string Feedback { get; set; }
+
     public List<AttachmentFile> Files { get; set; }
+
+    //public string TicketId { get; set; }
+    //public string StatusName { get; set; }
+    //public string Feedback { get; set; }
+    //public List<AttachmentFile> Files { get; set; }
 
 }
 public class AttachmentFile
 {
+   
     public string attachment_base64 { get; set; }
     public string attachment_name { get; set; }
     public string attachment_type { get; set; }
+
 }
 public class ApiSettings
 {
@@ -783,36 +952,57 @@ public class ApiSettings
 
 
 
-public class CustomField
-{
-    public string custom_field_id { get; set; }
-    public string category_id { get; set; }
-    public string field_name { get; set; }
-    public int order_number { get; set; }
-    public int field_type { get; set; }
-    public string value { get; set; }
-}
+
+    public class CustomField
+    {
+        public string custom_field_id { get; set; }
+
+        public string category_id { get; set; }
+
+        public string field_name { get; set; }
+
+        public int order_number { get; set; }
+
+        public int field_type { get; set; }
+
+        public string value { get; set; }
+    }
+
+
 
 public class TicketRequest
 {
     public string category_id { get; set; }
+
     public string title { get; set; }
+
     public string assigne_group { get; set; }
+
     public string assigne_user { get; set; }
+
     public string reference_ticket { get; set; }
+
     public string ticket_description { get; set; }
+
     public string sortfield { get; set; }
+
     public string created_by { get; set; }
+
     public List<CustomField> custom_field { get; set; }
+
     public List<Attachment> file { get; set; }
 }
+
 
 public class Attachment
 {
     public string attachment_base64 { get; set; }
+
     public string attachment_name { get; set; }
+
     public string attachment_type { get; set; }
 }
+
 public class TokenResponse
 {
     [JsonProperty("access_token")]

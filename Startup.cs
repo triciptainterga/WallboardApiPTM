@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using AspNetCoreRateLimit;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -34,6 +35,13 @@ namespace WEBAPI_Bravo
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMemoryCache();
+            services.Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimiting"));
+            services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+            services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+            services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+            services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+            services.AddInMemoryRateLimiting();
 
             services.AddHttpClient(); // <--- ini penting
             services.AddControllers();
@@ -62,7 +70,6 @@ namespace WEBAPI_Bravo
 
 
             // Menambahkan layanan untuk controller
-            services.AddControllers();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
        .AddJwtBearer(options =>
        {
@@ -152,7 +159,23 @@ namespace WEBAPI_Bravo
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
 
+            app.Use(async (context, next) =>
+            {
+                context.Response.OnStarting(() =>
+                {
+                    // Hapus header tertentu
+                    context.Response.Headers.Remove("Server");
+                    context.Response.Headers.Remove("X-Powered-By");
+                    context.Response.Headers.Remove("X-AspNet-Version");
+                    context.Response.Headers.Remove("X-AspNetMvc-Version");
+                    context.Response.Headers.Remove("Content-Type"); 
 
+                   
+                    return Task.CompletedTask;
+                });
+
+                await next();
+            });
 
             //app.UseCors("AllowAllOrigins");
             //app.UseRouting();
@@ -184,11 +207,14 @@ namespace WEBAPI_Bravo
             //  c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
             //  // c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
             //});
+
+
+
             app.UseCors("AllowAllOrigins");
             app.UseRouting();
 
 
-
+            app.UseIpRateLimiting();
             app.UseAuthentication();
             app.UseAuthorization();
 

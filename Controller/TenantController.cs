@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -95,7 +97,521 @@ namespace WEBAPI_Bravo.Controller
             return Ok(users);
         }
 
+
+
+        [HttpGet]
+        [Route("GetDataCustomerOmnixQuery")]
+        public async Task<IActionResult> GetDataCustomerOn4()
+        {
+            string mySqlConnStr = _configuration.GetConnectionString("OmnixConnection");   // MySQL
+            string sqlServerConnStr = _configuration.GetConnectionString("CrmConnection"); // SQL Server
+
+            const int batchSize = 1000;
+            int success = 0;
+            int failed = 0;
+            int total = 0;
+
+            // Buat folder log per hari
+            string baseLogDir = @"C:\LogIntegrasi";
+            string todayFolder = DateTime.UtcNow.ToString("yyyy-MM-dd");
+            string fullLogPath = Path.Combine(baseLogDir, todayFolder);
+            Directory.CreateDirectory(fullLogPath);
+
+            string timestamp = DateTime.UtcNow.ToString("HHmmss");
+            string logFilePath = Path.Combine(fullLogPath, $"Log_Insert_{timestamp}.txt");
+            var logLines = new List<string>();
+            logLines.Add($"=== LOG MIGRASI CUSTOMER {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC ===");
+
+            // 1. Hitung total data MySQL
+            using (var mySqlCountConn = new MySqlConnection(mySqlConnStr))
+            {
+                await mySqlCountConn.OpenAsync();
+                using var countCmd = new MySqlCommand("SELECT COUNT(*) FROM m_customer", mySqlCountConn);
+                total = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
+            }
+
+            int totalBatches = (int)Math.Ceiling(total / (double)batchSize);
+
+            using (var sqlServerConn = new SqlConnection(sqlServerConnStr))
+            {
+                await sqlServerConn.OpenAsync();
+
+                for (int batchNumber = 0; batchNumber < totalBatches; batchNumber++)
+                {
+                    var customersBatch = new List<CustomerModel>();
+
+                    // Ambil batch data dari MySQL
+                    using (var mySqlConn = new MySqlConnection(mySqlConnStr))
+                    {
+                        await mySqlConn.OpenAsync();
+
+                        string query = @"SELECT 
+                        id As Id, 
+                        member_id AS MemberId,
+                        name AS Name,
+                        address AS Address,
+                        hp AS Hp,
+                        email AS Email,
+                        telegram_id AS TelegramId,
+                        twitter_id AS TwitterId,
+                        twitter_username AS TwitterUsername,
+                        twitter_followers AS TwitterFollowers,
+                        twitter_following AS TwitterFollowing,
+                        twitter_picture AS TwitterPicture,
+                        twitter_name AS TwitterName,
+                        facebook_id AS FacebookId,
+                        facebook_name AS FacebookName,
+                        facebook_picture AS FacebookPicture,
+                        instagram_id AS InstagramId,
+                        instagram_id2 AS InstagramId2,
+                        application AS Application,
+                        instagram_name AS InstagramName,
+                        instagram_picture AS InstagramPicture,
+                        line_id AS LineId,
+                        gender AS Gender,
+                        id_on4 AS IdOn4,
+                        other AS Other,
+                        created_by AS CreatedBy,
+                        created_at As CreatedAt 
+                    FROM m_customer
+                   
+                    LIMIT @limit OFFSET @offset";
+
+                        using var cmd = new MySqlCommand(query, mySqlConn);
+                        cmd.Parameters.AddWithValue("@limit", batchSize);
+                        cmd.Parameters.AddWithValue("@offset", batchNumber * batchSize);
+
+                        using var reader = await cmd.ExecuteReaderAsync();
+
+                        while (await reader.ReadAsync())
+                        {
+                            customersBatch.Add(new CustomerModel
+                            {
+                                Id = int.Parse(reader["Id"].ToString()) ,
+                                MemberId = reader["MemberId"] as string,
+                                Name = reader["Name"] as string,
+                                Address = reader["Address"] as string,
+                                Hp = reader["Hp"] as string,
+                                Email = reader["Email"] as string,
+                                TelegramId = reader["TelegramId"] as string,
+                                TwitterId = reader["TwitterId"] as string,
+                                TwitterUsername = reader["TwitterUsername"] as string,
+                                TwitterFollowers = reader["TwitterFollowers"] as int?,
+                                TwitterFollowing = reader["TwitterFollowing"] as int?,
+                                TwitterPicture = reader["TwitterPicture"] as string,
+                                TwitterName = reader["TwitterName"] as string,
+                                FacebookId = reader["FacebookId"] as string,
+                                FacebookName = reader["FacebookName"] as string,
+                                FacebookPicture = reader["FacebookPicture"] as string,
+                                InstagramId = reader["InstagramId"] as string,
+                                InstagramId2 = reader["InstagramId2"] as string,
+                                Application = reader["Application"] as string,
+                                InstagramName = reader["InstagramName"] as string,
+                                InstagramPicture = reader["InstagramPicture"] as string,
+                                LineId = reader["LineId"] as string,
+                                Gender = reader["Gender"] as string,
+                                IdOn4 = reader["IdOn4"]?.ToString(),
+                                Other = reader["Other"] as string,
+                                CreatedBy = reader["CreatedBy"] as string,
+                                CreatedDate = reader["CreatedAt"] as string,
+                            });
+                        }
+                    }
+
+                    // Insert ke SQL Server
+                    foreach (var item in customersBatch)
+                    {
+                        try
+                        {
+                            using (var cmd = new SqlCommand("sp_InsertCustomerIntegrasi", sqlServerConn))
+                            {
+                                cmd.CommandType = CommandType.StoredProcedure;
+
+                                cmd.Parameters.AddWithValue("@MemberId", item.MemberId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Name", item.Name ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Address", item.Address ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Hp", item.Hp ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Email", item.Email ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TelegramId", item.TelegramId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TelegramUsername", DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TelegramName", DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterId", item.TwitterId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterUsername", item.TwitterUsername ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterFollowers", item.TwitterFollowers?.ToString() ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterFollowing", item.TwitterFollowing?.ToString() ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterPicture", item.TwitterPicture ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterName", item.TwitterName ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@FacebookId", item.FacebookId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@FacebookName", item.FacebookName ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@FacebookPicture", item.FacebookPicture ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@InstagramId", item.InstagramId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@InstagramId2", item.InstagramId2 ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Application", item.Application ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@InstagramName", item.InstagramName ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@InstagramPicture", item.InstagramPicture ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@LineId", item.LineId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Gender", item.Gender ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@IdOn4", item.IdOn4?.ToString() ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Other", item.Other ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@CreatedBy", item.CreatedBy?.ToString() ?? "migration");
+                                cmd.Parameters.AddWithValue("@CreatedAt", item.CreatedDate);
+
+                                await cmd.ExecuteNonQueryAsync();
+                                success++;
+
+                                logLines.Add($"INSERT DATA: {item.MemberId}, {item.Name}, {item.Address}, {item.Email} ➜ SUKSES");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            failed++;
+                            logLines.Add($"INSERT DATA: {item.MemberId}, {item.Name}, {item.Address}, {item.Email} ➜ GAGAL: {ex.Message}");
+                        }
+                    }
+                }
+            }
+
+            logLines.Add($"=== TOTAL: SUKSES = {success}, GAGAL = {failed} ===");
+            await System.IO.File.WriteAllLinesAsync(logFilePath, logLines);
+            return Ok(new
+            {
+                message = "Proses arsip selesai.",
+                total_data = total,
+                inserted = success,
+                failed = failed,
+                log_path = logFilePath
+            });
+        }
+
+
+
+
+
+
+        [HttpGet]
+        [Route("GetDataCustomerOmnix")]
+        public async Task<IActionResult> GetDataCustomerOmnix()
+        {
+            string connectionString = _configuration.GetConnectionString("CrmConnection");
+
+             var customers = await _context.MCustomers.ToListAsync(); // Ini masih dari MySQL pakai EF
+
+      //      var customers = await _context.MCustomers
+      //.Where(x => x.Id > 1320603)
+      //.ToListAsync();
+
+
+
+
+            if (customers == null || !customers.Any())
+                return NotFound(new { message = "Data customer tidak ditemukan." });
+
+            int success = 0;
+            int failed = 0;
+            int total = customers.Count;
+
+            // ==== Tambahan: Siapkan log file ====
+            string baseLogDir = @"C:\LogIntegrasi";
+            string todayFolder = DateTime.UtcNow.ToString("yyyy-MM-dd");
+            string fullLogPath = Path.Combine(baseLogDir, todayFolder);
+            Directory.CreateDirectory(fullLogPath);
+
+            string timestamp = DateTime.UtcNow.ToString("HHmmss");
+            string logFilePath = Path.Combine(fullLogPath, $"Log_Omnix_{timestamp}.txt");
+
+            var logLines = new List<string>();
+            logLines.Add($"=== LOG MIGRASI CUSTOMER OMNIX {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC ===");
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+
+                foreach (var item in customers)
+                {
+                    try
+                    {
+                        using (SqlCommand cmd = new SqlCommand("sp_InsertCustomerIntegrasi", conn))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+
+                            cmd.Parameters.AddWithValue("@Id", item.Id);
+                            cmd.Parameters.AddWithValue("@MemberId", item.MemberId ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Name", item.Name ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Address", item.Address ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Hp", item.Hp ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Email", item.Email ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@TelegramId", item.TelegramId ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@TelegramUsername", DBNull.Value);
+                            cmd.Parameters.AddWithValue("@TelegramName", DBNull.Value);
+                            cmd.Parameters.AddWithValue("@TwitterId", item.TwitterId ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@TwitterUsername", item.TwitterUsername ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@TwitterFollowers", item.TwitterFollowers?.ToString() ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@TwitterFollowing", item.TwitterFollowing?.ToString() ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@TwitterPicture", item.TwitterPicture ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@TwitterName", item.TwitterName ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@FacebookId", item.FacebookId ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@FacebookName", item.FacebookName ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@FacebookPicture", item.FacebookPicture ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@InstagramId", item.InstagramId ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@InstagramId2", item.InstagramId2 ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Application", item.Application ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@InstagramName", item.InstagramName ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@InstagramPicture", item.InstagramPicture ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@LineId", item.LineId ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Gender", item.Gender ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@IdOn4", item.IdOn4?.ToString() ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Other", item.Other ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@CreatedBy", item.CreatedBy.ToString());
+                            cmd.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow);
+
+                            await cmd.ExecuteNonQueryAsync();
+                            success++;
+
+                            logLines.Add($"INSERT DATA: {item.MemberId}, {item.Name}, {item.Address}, {item.Email} ➜ SUKSES");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        failed++;
+                        logLines.Add($"INSERT DATA: {item.MemberId}, {item.Name}, {item.Address}, {item.Email} ➜ GAGAL: {ex.Message}");
+                    }
+                }
+            }
+
+            logLines.Add($"=== TOTAL: SUKSES = {success}, GAGAL = {failed} ===");
+
+            await System.IO.File.WriteAllLinesAsync(logFilePath, logLines);
+
+            return Ok(new
+            {
+                message = customers,
+                total_data = total,
+                inserted = success,
+                failed = failed,
+                log_path = logFilePath
+            });
+        }
+
+
+
+       
+      
+
+
+        [HttpGet]
+        [Route("GetDataCustomerOn4")]
+        public async Task<IActionResult> GetDataCustomerOn412()
+        {
+            string mySqlConnStr = _configuration.GetConnectionString("On4Connection");   // MySQL
+            string sqlServerConnStr = _configuration.GetConnectionString("CrmConnection"); // SQL Server
+
+            const int batchSize = 1000;
+            int success = 0;
+            int failed = 0;
+            int total = 0;
+
+            // Buat folder log per hari
+            string baseLogDir = @"C:\LogIntegrasi";
+            string todayFolder = DateTime.UtcNow.ToString("yyyy-MM-dd");
+            string fullLogPath = Path.Combine(baseLogDir, todayFolder);
+            Directory.CreateDirectory(fullLogPath);
+
+            string timestamp = DateTime.UtcNow.ToString("HHmmss");
+            string logFilePath = Path.Combine(fullLogPath, $"Log_Insert_{timestamp}.txt");
+            var logLines = new List<string>();
+            logLines.Add($"=== LOG MIGRASI CUSTOMER {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC ===");
+
+            // 1. Hitung total data MySQL
+            using (var mySqlCountConn = new MySqlConnection(mySqlConnStr))
+            {
+                await mySqlCountConn.OpenAsync();
+                using var countCmd = new MySqlCommand("SELECT COUNT(*) FROM m_customer", mySqlCountConn);
+                total = Convert.ToInt32(await countCmd.ExecuteScalarAsync());
+            }
+
+            int totalBatches = (int)Math.Ceiling(total / (double)batchSize);
+
+            using (var sqlServerConn = new SqlConnection(sqlServerConnStr))
+            {
+                await sqlServerConn.OpenAsync();
+
+                for (int batchNumber = 0; batchNumber < totalBatches; batchNumber++)
+                {
+                    var customersBatch = new List<CustomerModel>();
+
+                    // Ambil batch data dari MySQL
+                    using (var mySqlConn = new MySqlConnection(mySqlConnStr))
+                    {
+                        await mySqlConn.OpenAsync();
+
+                        string query = @"SELECT 
+                        member_id AS MemberId,
+                        name AS Name,
+                        address AS Address,
+                        hp AS Hp,
+                        email AS Email,
+                        telegram_id AS TelegramId,
+                        twitter_id AS TwitterId,
+                        twitter_username AS TwitterUsername,
+                        twitter_followers AS TwitterFollowers,
+                        twitter_following AS TwitterFollowing,
+                        twitter_picture AS TwitterPicture,
+                        twitter_name AS TwitterName,
+                        facebook_id AS FacebookId,
+                        facebook_name AS FacebookName,
+                        facebook_picture AS FacebookPicture,
+                        instagram_id AS InstagramId,
+                        instagram_id2 AS InstagramId2,
+                        application AS Application,
+                        instagram_name AS InstagramName,
+                        instagram_picture AS InstagramPicture,
+                        line_id AS LineId,
+                        gender AS Gender,
+                        id_on4 AS IdOn4,
+                        other AS Other,
+                        created_by AS CreatedBy
+                    FROM m_customer
+                    ORDER BY member_id
+                    LIMIT @limit OFFSET @offset";
+
+                        using var cmd = new MySqlCommand(query, mySqlConn);
+                        cmd.Parameters.AddWithValue("@limit", batchSize);
+                        cmd.Parameters.AddWithValue("@offset", batchNumber * batchSize);
+
+                        using var reader = await cmd.ExecuteReaderAsync();
+
+                        while (await reader.ReadAsync())
+                        {
+                            customersBatch.Add(new CustomerModel
+                            {
+                                MemberId = reader["MemberId"] as string,
+                                Name = reader["Name"] as string,
+                                Address = reader["Address"] as string,
+                                Hp = reader["Hp"] as string,
+                                Email = reader["Email"] as string,
+                                TelegramId = reader["TelegramId"] as string,
+                                TwitterId = reader["TwitterId"] as string,
+                                TwitterUsername = reader["TwitterUsername"] as string,
+                                TwitterFollowers = reader["TwitterFollowers"] as int?,
+                                TwitterFollowing = reader["TwitterFollowing"] as int?,
+                                TwitterPicture = reader["TwitterPicture"] as string,
+                                TwitterName = reader["TwitterName"] as string,
+                                FacebookId = reader["FacebookId"] as string,
+                                FacebookName = reader["FacebookName"] as string,
+                                FacebookPicture = reader["FacebookPicture"] as string,
+                                InstagramId = reader["InstagramId"] as string,
+                                InstagramId2 = reader["InstagramId2"] as string,
+                                Application = reader["Application"] as string,
+                                InstagramName = reader["InstagramName"] as string,
+                                InstagramPicture = reader["InstagramPicture"] as string,
+                                LineId = reader["LineId"] as string,
+                                Gender = reader["Gender"] as string,
+                                IdOn4 = reader["IdOn4"]?.ToString(),
+                                Other = reader["Other"] as string,
+                                CreatedBy = reader["CreatedBy"] as string,
+                            });
+                        }
+                    }
+
+                    // Insert ke SQL Server
+                    foreach (var item in customersBatch)
+                    {
+                        try
+                        {
+                            using (var cmd = new SqlCommand("sp_InsertCustomerIntegrasi", sqlServerConn))
+                            {
+                                cmd.CommandType = CommandType.StoredProcedure;
+
+                                cmd.Parameters.AddWithValue("@MemberId", item.MemberId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Name", item.Name ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Address", item.Address ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Hp", item.Hp ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Email", item.Email ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TelegramId", item.TelegramId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TelegramUsername", DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TelegramName", DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterId", item.TwitterId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterUsername", item.TwitterUsername ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterFollowers", item.TwitterFollowers?.ToString() ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterFollowing", item.TwitterFollowing?.ToString() ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterPicture", item.TwitterPicture ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@TwitterName", item.TwitterName ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@FacebookId", item.FacebookId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@FacebookName", item.FacebookName ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@FacebookPicture", item.FacebookPicture ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@InstagramId", item.InstagramId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@InstagramId2", item.InstagramId2 ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Application", item.Application ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@InstagramName", item.InstagramName ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@InstagramPicture", item.InstagramPicture ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@LineId", item.LineId ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Gender", item.Gender ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@IdOn4", item.IdOn4?.ToString() ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@Other", item.Other ?? (object)DBNull.Value);
+                                cmd.Parameters.AddWithValue("@CreatedBy", item.CreatedBy?.ToString() ?? "migration");
+                                cmd.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow);
+
+                                await cmd.ExecuteNonQueryAsync();
+                                success++;
+
+                                logLines.Add($"INSERT DATA: {item.MemberId}, {item.Name}, {item.Address}, {item.Email} ➜ SUKSES");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            failed++;
+                            logLines.Add($"INSERT DATA: {item.MemberId}, {item.Name}, {item.Address}, {item.Email} ➜ GAGAL: {ex.Message}");
+                        }
+                    }
+                }
+            }
+
+            logLines.Add($"=== TOTAL: SUKSES = {success}, GAGAL = {failed} ===");
+            await System.IO.File.WriteAllLinesAsync(logFilePath, logLines); 
+            return Ok(new
+            {
+                message = "Proses arsip selesai.",
+                total_data = total,
+                inserted = success,
+                failed = failed,
+                log_path = logFilePath
+            });
+        }
+
     }
+
+
+}
+
+public class CustomerModel
+{
+    public int Id { get; set; }
+    public string MemberId { get; set; }
+    public string Name { get; set; }
+    public string Address { get; set; }
+    public string Hp { get; set; }
+    public string Email { get; set; }
+    public string TelegramId { get; set; }
+    public string TwitterId { get; set; }
+    public string TwitterUsername { get; set; }
+    public int? TwitterFollowers { get; set; }
+    public int? TwitterFollowing { get; set; }
+    public string TwitterPicture { get; set; }
+    public string TwitterName { get; set; }
+    public string FacebookId { get; set; }
+    public string FacebookName { get; set; }
+    public string FacebookPicture { get; set; }
+    public string InstagramId { get; set; }
+    public string InstagramId2 { get; set; }
+    public string Application { get; set; }
+    public string InstagramName { get; set; }
+    public string InstagramPicture { get; set; }
+    public string LineId { get; set; }
+    public string Gender { get; set; }
+    public string IdOn4 { get; set; }
+    public string Other { get; set; }
+    public string CreatedBy { get; set; }
+    public string CreatedDate { get; set; }
 }
 
 public class dataTenant

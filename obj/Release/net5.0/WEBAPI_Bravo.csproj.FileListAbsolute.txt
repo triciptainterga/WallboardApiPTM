@@ -314,3 +314,4 @@ C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\ref\WEBAPI_Bravo.dll
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\WEBAPI_Bravo.pdb
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\WEBAPI_Bravo.genruntimeconfig.cache
 C:\2025ApiPertamina\WallboardApiPTM\obj\Release\net5.0\WEBAPI_Bravo.csproj.AssemblyReference.cache
+C:\2025ApiPertamina\WallboardApiPTM\bin\Release\net5.0\AspNetCoreRateLimit.dll

@@ -12,11 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Controller\CMSReportController .cs" />
-    <Compile Remove="Controller\DailyMonitoringController.cs" />
-    <Compile Remove="Controller\DashboardMonitoringController.cs" />
     <Compile Remove="Controller\ExecutiveMonitoringController123.cs" />
-    <Compile Remove="Controller\WallboadCustomeController.cs" />
     <Compile Remove="Model\On4Context.cs" />
   </ItemGroup>
 
@@ -25,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNetCoreRateLimit" Version="4.0.2" />
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.17" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.17" />
