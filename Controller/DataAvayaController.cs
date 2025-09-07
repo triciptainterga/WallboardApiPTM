@@ -44,33 +44,52 @@ namespace WEBAPI_Bravo.Controller
 
             string skill = string.Empty;
 
-            // var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
-            var crmConnectionString = _configuration.GetConnectionString("CrmConnection");
-
-            using (var conn = new SqlConnection(crmConnectionString))
-            using (var cmd = new SqlCommand("GetSkillByChannelAndUser", conn))
+            try
             {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@Channel", "Voice");
-                cmd.Parameters.AddWithValue("@Users", Tenant);
-                conn.Open();
-                var result = await cmd.ExecuteScalarAsync();
-                skill = result?.ToString();
+                var crmConnectionString = _configuration.GetConnectionString("CrmConnection");
+
+                using (var conn = new SqlConnection(crmConnectionString))
+                using (var cmd = new SqlCommand("GetSkillByChannelAndUser", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@Channel", "Voice");
+                    cmd.Parameters.AddWithValue("@Users", Tenant);
+
+                    await conn.OpenAsync();
+                    var result = await cmd.ExecuteScalarAsync();
+                    skill = result?.ToString();
+                }
+
+                Console.WriteLine($"Skill: {skill}");
+
+                string localDirectory = @"E:\DataAvaya";
+                string NameFile = "ReportAIO_VoiceAll.txt";
+                string FilePath = Path.Combine(localDirectory, NameFile);
+
+                if (!System.IO.File.Exists(FilePath))
+                {
+                    return NotFound("File not found.");
+                }
+
+                var data = await _detailServices.ReadDataCallFromFile(FilePath, skill);
+                return Ok(data);
+            }
+            catch (SqlException ex)
+            {
+                // Error dari SQL Server
+                return StatusCode(500, $"Database error: {ex.Message}");
+            }
+            catch (IOException ex)
+            {
+                // Error dari file handling
+                return StatusCode(500, $"File error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Error umum lainnya
+                return StatusCode(500, $"Unexpected error: {ex.Message}");
             }
 
-            Console.WriteLine($"Skill: {skill}");
-            string localDirectory = @"E:\DataAvaya";
-            string NameFile = "ReportAIO_VoiceAll.txt";
-
-
-            string FilePath = Path.Combine(localDirectory, NameFile);
-            if (!System.IO.File.Exists(FilePath))
-            {
-                return NotFound("File not found.");
-            }
-
-            var data = await _detailServices.ReadDataCallFromFile(FilePath, skill);
-            return Ok(data);
         }
         [HttpGet("detail-data")]
         public IActionResult GetDetailData123(string Tenant,string Channel)

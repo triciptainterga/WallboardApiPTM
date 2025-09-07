@@ -134,28 +134,28 @@ namespace WEBAPI_Bravo.Controller
             // Buat method helper agar tidak ngulang-ngulang
             bool IsValidText(string input) =>
                 !string.IsNullOrWhiteSpace(input) &&
-                input.Length <= 50 &&
+                input.Length <= 200 &&
                 Regex.IsMatch(input, @"^[a-zA-Z0-9\s]+$");
 
             bool IsValidTextNonNull(string input) =>
-               input.Length <= 50 &&
+               input.Length <= 200 &&
                Regex.IsMatch(input, @"^[a-zA-Z0-9\s]+$");
 
             // Validasi setiap properti
             if (!IsValidText(requestBody.category_id))
-                return StatusCode(422, new { error = "Category ID tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
+                return StatusCode(422, new { error = "Category ID tidak boleh kosong, maksimal 200 karakter, dan tanpa simbol." });
 
             if (!IsValidText(requestBody.title))
-                return StatusCode(422, new { error = "Title tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
+                return StatusCode(422, new { error = "Title tidak boleh kosong, maksimal 200 karakter, dan tanpa simbol." });
 
-            if (!IsValidText(requestBody.assigne_group))
-                return StatusCode(422, new { error = "Assignee Group tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
+            //if (!IsValidText(requestBody.assigne_group))
+            //    return StatusCode(422, new { error = "Assignee Group tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
 
-            if (!IsValidTextNonNull(requestBody.assigne_user))
-                return StatusCode(422, new { error = "Assignee User tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
+            //if (!IsValidTextNonNull(requestBody.assigne_user))
+            //    return StatusCode(422, new { error = "Assignee User tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
 
-              if (!IsValidText(requestBody.ticket_description))
-                return StatusCode(422, new { error = "Deskripsi tiket tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
+            //  if (!IsValidText(requestBody.ticket_description))
+            //    return StatusCode(422, new { error = "Deskripsi tiket tidak boleh kosong, maksimal 50 karakter, dan tanpa simbol." });
 
           
           
@@ -187,18 +187,18 @@ namespace WEBAPI_Bravo.Controller
                     else
                     {
                         // value tidak boleh lebih dari 50 karakter
-                        if (file.value.Length > 50)
+                        if (file.value.Length > 200)
                         {
 
-                            return StatusCode(422, new { error = "value maksimal 50 karakter." });
+                            return StatusCode(422, new { error = "value maksimal 200 karakter." });
                         }
 
                         // value tidak boleh mengandung simbol
-                        if (!Regex.IsMatch(file.value, @"^[a-zA-Z0-9 ]*$"))
-                        {
+                        //if (!Regex.IsMatch(file.value, @"^[a-zA-Z0-9 ]*$"))
+                        //{
 
-                            return StatusCode(422, new { error = "value tidak boleh mengandung simbol." });
-                        }
+                        //    return StatusCode(422, new { error = "value tidak boleh mengandung simbol." });
+                        //}
                     }
                 }
             }

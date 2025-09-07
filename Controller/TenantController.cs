@@ -101,7 +101,10 @@ namespace WEBAPI_Bravo.Controller
 
         [HttpGet]
         [Route("GetDataCustomerOmnixQuery")]
-        public async Task<IActionResult> GetDataCustomerOn4()
+
+
+        [HttpPost]
+        public async Task<IActionResult> MigrasiCustomer([FromQuery] int? StartId)
         {
             string mySqlConnStr = _configuration.GetConnectionString("OmnixConnection");   // MySQL
             string sqlServerConnStr = _configuration.GetConnectionString("CrmConnection"); // SQL Server
@@ -136,16 +139,51 @@ namespace WEBAPI_Bravo.Controller
             {
                 await sqlServerConn.OpenAsync();
 
-                for (int batchNumber = 0; batchNumber < totalBatches; batchNumber++)
+                // === Prepare SqlCommand sekali saja ===
+                using (var cmd = new SqlCommand("sp_InsertCustomerIntegrasi", sqlServerConn))
                 {
-                    var customersBatch = new List<CustomerModel>();
+                    cmd.CommandType = CommandType.StoredProcedure;
 
-                    // Ambil batch data dari MySQL
-                    using (var mySqlConn = new MySqlConnection(mySqlConnStr))
+                    // Definisikan parameter sekali
+                    cmd.Parameters.Add("@MemberId", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@Name", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@Address", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@Hp", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@Email", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@TelegramId", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@TelegramUsername", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@TelegramName", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@TwitterId", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@TwitterUsername", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@TwitterFollowers", SqlDbType.Int);
+                    cmd.Parameters.Add("@TwitterFollowing", SqlDbType.Int);
+                    cmd.Parameters.Add("@TwitterPicture", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@TwitterName", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@FacebookId", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@FacebookName", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@FacebookPicture", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@InstagramId", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@InstagramId2", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@Application", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@InstagramName", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@InstagramPicture", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@LineId", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@Gender", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@IdOn4", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@Other", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@CreatedBy", SqlDbType.NVarChar);
+                    cmd.Parameters.Add("@CreatedAt", SqlDbType.DateTime);
+
+                    for (int batchNumber = 0; batchNumber < totalBatches; batchNumber++)
                     {
-                        await mySqlConn.OpenAsync();
+                        var customersBatch = new List<CustomerModel>();
 
-                        string query = @"SELECT 
+                        // Ambil batch data dari MySQL
+                        using (var mySqlConn = new MySqlConnection(mySqlConnStr))
+                        {
+                            await mySqlConn.OpenAsync();
+
+                            string query = @"SELECT 
                         id As Id, 
                         member_id AS MemberId,
                         name AS Name,
@@ -174,98 +212,93 @@ namespace WEBAPI_Bravo.Controller
                         created_by AS CreatedBy,
                         created_at As CreatedAt 
                     FROM m_customer
-                   
+                    WHERE id > @StartId
                     LIMIT @limit OFFSET @offset";
 
-                        using var cmd = new MySqlCommand(query, mySqlConn);
-                        cmd.Parameters.AddWithValue("@limit", batchSize);
-                        cmd.Parameters.AddWithValue("@offset", batchNumber * batchSize);
+                            using var myCmd = new MySqlCommand(query, mySqlConn);
+                            myCmd.Parameters.AddWithValue("@StartId", StartId);
+                            myCmd.Parameters.AddWithValue("@limit", batchSize);
+                            myCmd.Parameters.AddWithValue("@offset", batchNumber * batchSize);
 
-                        using var reader = await cmd.ExecuteReaderAsync();
-
-                        while (await reader.ReadAsync())
-                        {
-                            customersBatch.Add(new CustomerModel
+                            using var reader = await myCmd.ExecuteReaderAsync();
+                            while (await reader.ReadAsync())
                             {
-                                Id = int.Parse(reader["Id"].ToString()) ,
-                                MemberId = reader["MemberId"] as string,
-                                Name = reader["Name"] as string,
-                                Address = reader["Address"] as string,
-                                Hp = reader["Hp"] as string,
-                                Email = reader["Email"] as string,
-                                TelegramId = reader["TelegramId"] as string,
-                                TwitterId = reader["TwitterId"] as string,
-                                TwitterUsername = reader["TwitterUsername"] as string,
-                                TwitterFollowers = reader["TwitterFollowers"] as int?,
-                                TwitterFollowing = reader["TwitterFollowing"] as int?,
-                                TwitterPicture = reader["TwitterPicture"] as string,
-                                TwitterName = reader["TwitterName"] as string,
-                                FacebookId = reader["FacebookId"] as string,
-                                FacebookName = reader["FacebookName"] as string,
-                                FacebookPicture = reader["FacebookPicture"] as string,
-                                InstagramId = reader["InstagramId"] as string,
-                                InstagramId2 = reader["InstagramId2"] as string,
-                                Application = reader["Application"] as string,
-                                InstagramName = reader["InstagramName"] as string,
-                                InstagramPicture = reader["InstagramPicture"] as string,
-                                LineId = reader["LineId"] as string,
-                                Gender = reader["Gender"] as string,
-                                IdOn4 = reader["IdOn4"]?.ToString(),
-                                Other = reader["Other"] as string,
-                                CreatedBy = reader["CreatedBy"] as string,
-                                CreatedDate = reader["CreatedAt"] as string,
-                            });
+                                customersBatch.Add(new CustomerModel
+                                {
+                                    Id = Convert.ToInt32(reader["Id"]),
+                                    MemberId = reader["MemberId"] as string,
+                                    Name = reader["Name"] as string,
+                                    Address = reader["Address"] as string,
+                                    Hp = reader["Hp"] as string,
+                                    Email = reader["Email"] as string,
+                                    TelegramId = reader["TelegramId"] as string,
+                                    TwitterId = reader["TwitterId"] as string,
+                                    TwitterUsername = reader["TwitterUsername"] as string,
+                                    TwitterFollowers = reader["TwitterFollowers"] as int?,
+                                    TwitterFollowing = reader["TwitterFollowing"] as int?,
+                                    TwitterPicture = reader["TwitterPicture"] as string,
+                                    TwitterName = reader["TwitterName"] as string,
+                                    FacebookId = reader["FacebookId"] as string,
+                                    FacebookName = reader["FacebookName"] as string,
+                                    FacebookPicture = reader["FacebookPicture"] as string,
+                                    InstagramId = reader["InstagramId"] as string,
+                                    InstagramId2 = reader["InstagramId2"] as string,
+                                    Application = reader["Application"] as string,
+                                    InstagramName = reader["InstagramName"] as string,
+                                    InstagramPicture = reader["InstagramPicture"] as string,
+                                    LineId = reader["LineId"] as string,
+                                    Gender = reader["Gender"] as string,
+                                    IdOn4 = reader["IdOn4"]?.ToString(),
+                                    Other = reader["Other"] as string,
+                                    CreatedBy = reader["CreatedBy"] as string,
+                                    CreatedDate = reader["CreatedAt"] as string
+                                });
+                            }
                         }
-                    }
 
-                    // Insert ke SQL Server
-                    foreach (var item in customersBatch)
-                    {
-                        try
+                        // Insert ke SQL Server, 1 row per loop
+                        foreach (var item in customersBatch)
                         {
-                            using (var cmd = new SqlCommand("sp_InsertCustomerIntegrasi", sqlServerConn))
+                            try
                             {
-                                cmd.CommandType = CommandType.StoredProcedure;
-
-                                cmd.Parameters.AddWithValue("@MemberId", item.MemberId ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@Name", item.Name ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@Address", item.Address ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@Hp", item.Hp ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@Email", item.Email ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@TelegramId", item.TelegramId ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@TelegramUsername", DBNull.Value);
-                                cmd.Parameters.AddWithValue("@TelegramName", DBNull.Value);
-                                cmd.Parameters.AddWithValue("@TwitterId", item.TwitterId ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@TwitterUsername", item.TwitterUsername ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@TwitterFollowers", item.TwitterFollowers?.ToString() ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@TwitterFollowing", item.TwitterFollowing?.ToString() ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@TwitterPicture", item.TwitterPicture ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@TwitterName", item.TwitterName ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@FacebookId", item.FacebookId ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@FacebookName", item.FacebookName ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@FacebookPicture", item.FacebookPicture ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@InstagramId", item.InstagramId ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@InstagramId2", item.InstagramId2 ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@Application", item.Application ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@InstagramName", item.InstagramName ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@InstagramPicture", item.InstagramPicture ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@LineId", item.LineId ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@Gender", item.Gender ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@IdOn4", item.IdOn4?.ToString() ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@Other", item.Other ?? (object)DBNull.Value);
-                                cmd.Parameters.AddWithValue("@CreatedBy", item.CreatedBy?.ToString() ?? "migration");
-                                cmd.Parameters.AddWithValue("@CreatedAt", item.CreatedDate);
+                                cmd.Parameters["@MemberId"].Value = (object)item.MemberId ?? DBNull.Value;
+                                cmd.Parameters["@Name"].Value = (object)item.Name ?? DBNull.Value;
+                                cmd.Parameters["@Address"].Value = (object)item.Address ?? DBNull.Value;
+                                cmd.Parameters["@Hp"].Value = (object)item.Hp ?? DBNull.Value;
+                                cmd.Parameters["@Email"].Value = (object)item.Email ?? DBNull.Value;
+                                cmd.Parameters["@TelegramId"].Value = (object)item.TelegramId ?? DBNull.Value;
+                                cmd.Parameters["@TelegramUsername"].Value = DBNull.Value;
+                                cmd.Parameters["@TelegramName"].Value = DBNull.Value;
+                                cmd.Parameters["@TwitterId"].Value = (object)item.TwitterId ?? DBNull.Value;
+                                cmd.Parameters["@TwitterUsername"].Value = (object)item.TwitterUsername ?? DBNull.Value;
+                                cmd.Parameters["@TwitterFollowers"].Value = (object)item.TwitterFollowers ?? DBNull.Value;
+                                cmd.Parameters["@TwitterFollowing"].Value = (object)item.TwitterFollowing ?? DBNull.Value;
+                                cmd.Parameters["@TwitterPicture"].Value = (object)item.TwitterPicture ?? DBNull.Value;
+                                cmd.Parameters["@TwitterName"].Value = (object)item.TwitterName ?? DBNull.Value;
+                                cmd.Parameters["@FacebookId"].Value = (object)item.FacebookId ?? DBNull.Value;
+                                cmd.Parameters["@FacebookName"].Value = (object)item.FacebookName ?? DBNull.Value;
+                                cmd.Parameters["@FacebookPicture"].Value = (object)item.FacebookPicture ?? DBNull.Value;
+                                cmd.Parameters["@InstagramId"].Value = (object)item.InstagramId ?? DBNull.Value;
+                                cmd.Parameters["@InstagramId2"].Value = (object)item.InstagramId2 ?? DBNull.Value;
+                                cmd.Parameters["@Application"].Value = (object)item.Application ?? DBNull.Value;
+                                cmd.Parameters["@InstagramName"].Value = (object)item.InstagramName ?? DBNull.Value;
+                                cmd.Parameters["@InstagramPicture"].Value = (object)item.InstagramPicture ?? DBNull.Value;
+                                cmd.Parameters["@LineId"].Value = (object)item.LineId ?? DBNull.Value;
+                                cmd.Parameters["@Gender"].Value = (object)item.Gender ?? DBNull.Value;
+                                cmd.Parameters["@IdOn4"].Value = (object)item.IdOn4 ?? DBNull.Value;
+                                cmd.Parameters["@Other"].Value = (object)item.Other ?? DBNull.Value;
+                                cmd.Parameters["@CreatedBy"].Value = (object)(item.CreatedBy ?? "migration");
+                                cmd.Parameters["@CreatedAt"].Value = (object)item.CreatedDate ?? DBNull.Value;
 
                                 await cmd.ExecuteNonQueryAsync();
                                 success++;
-
                                 logLines.Add($"INSERT DATA: {item.MemberId}, {item.Name}, {item.Address}, {item.Email} ➜ SUKSES");
                             }
-                        }
-                        catch (Exception ex)
-                        {
-                            failed++;
-                            logLines.Add($"INSERT DATA: {item.MemberId}, {item.Name}, {item.Address}, {item.Email} ➜ GAGAL: {ex.Message}");
+                            catch (Exception ex)
+                            {
+                                failed++;
+                                logLines.Add($"INSERT DATA: {item.MemberId}, {item.Name}, {item.Address}, {item.Email} ➜ GAGAL: {ex.Message}");
+                            }
                         }
                     }
                 }
@@ -273,6 +306,7 @@ namespace WEBAPI_Bravo.Controller
 
             logLines.Add($"=== TOTAL: SUKSES = {success}, GAGAL = {failed} ===");
             await System.IO.File.WriteAllLinesAsync(logFilePath, logLines);
+
             return Ok(new
             {
                 message = "Proses arsip selesai.",
@@ -287,14 +321,13 @@ namespace WEBAPI_Bravo.Controller
 
 
 
-
         [HttpGet]
         [Route("GetDataCustomerOmnix")]
-        public async Task<IActionResult> GetDataCustomerOmnix()
+        public async Task<IActionResult> GetDataCustomerOmnix(int startId)
         {
             string connectionString = _configuration.GetConnectionString("CrmConnection");
 
-             var customers = await _context.MCustomers.ToListAsync(); // Ini masih dari MySQL pakai EF
+             var customers = await _context.MCustomers.Where(x => x.Id > startId).ToListAsync(); // Ini masih dari MySQL pakai EF
 
       //      var customers = await _context.MCustomers
       //.Where(x => x.Id > 1320603)
