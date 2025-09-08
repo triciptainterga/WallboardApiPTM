@@ -45,20 +45,20 @@ namespace WEBAPI_Bravo.Controller
             string skill = string.Empty;
 
             // var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
-            var crmConnectionString = _configuration.GetConnectionString("CrmConnection");
+            //var crmConnectionString = _configuration.GetConnectionString("CrmConnection");
 
-            using (var conn = new SqlConnection(crmConnectionString))
-            using (var cmd = new SqlCommand("GetSkillByChannelAndUser", conn))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@Channel", "Voice");
-                cmd.Parameters.AddWithValue("@Users", Tenant);
-                conn.Open();
-                var result = await cmd.ExecuteScalarAsync();
-                skill = result?.ToString();
-            }
+            //using (var conn = new SqlConnection(crmConnectionString))
+            //using (var cmd = new SqlCommand("GetSkillByChannelAndUser", conn))
+            //{
+            //    cmd.CommandType = CommandType.StoredProcedure;
+            //    cmd.Parameters.AddWithValue("@Channel", "Voice");
+            //    cmd.Parameters.AddWithValue("@Users", Tenant);
+            //    conn.Open();
+            //    var result = await cmd.ExecuteScalarAsync();
+            //    skill = result?.ToString();
+            //}
 
-            Console.WriteLine($"Skill: {skill}");
+           // Console.WriteLine($"Skill: {skill}");
             string localDirectory = @"E:\DataAvaya";
             string NameFile = "ReportAIO_VoiceAll.txt";
 
@@ -69,7 +69,7 @@ namespace WEBAPI_Bravo.Controller
                 return NotFound("File not found.");
             }
 
-            var data = await _detailServices.ReadDataCallFromFile(FilePath, skill);
+            var data = await _detailServices.ReadDataCallFromFile(FilePath);
             return Ok(data);
         }
         [HttpGet("detail-data")]
@@ -234,18 +234,18 @@ namespace WEBAPI_Bravo.Controller
                 string skill = string.Empty;
 
                // var crmConnectionString = _configuration.GetConnectionString("CRMConnection");
-                var crmConnectionString = _configuration.GetConnectionString("CrmConnection");
+                //var crmConnectionString = _configuration.GetConnectionString("CrmConnection");
 
-                using (var conn = new SqlConnection(crmConnectionString))
-                using (var cmd = new SqlCommand("GetSkillByChannelAndUser", conn))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@Channel", channel);
-                    cmd.Parameters.AddWithValue("@Users", Tenant);
-                    conn.Open();
-                    var result = await cmd.ExecuteScalarAsync();
-                    skill = result?.ToString();
-                }
+                //using (var conn = new SqlConnection(crmConnectionString))
+                //using (var cmd = new SqlCommand("GetSkillByChannelAndUser", conn))
+                //{
+                //    cmd.CommandType = CommandType.StoredProcedure;
+                //    cmd.Parameters.AddWithValue("@Channel", channel);
+                //    cmd.Parameters.AddWithValue("@Users", Tenant);
+                //    conn.Open();
+                //    var result = await cmd.ExecuteScalarAsync();
+                //    skill = result?.ToString();
+                //}
 
                 Console.WriteLine($"Skill: {skill}");
 
@@ -258,7 +258,7 @@ namespace WEBAPI_Bravo.Controller
                     return NotFound("File not found.");
                 }
 
-                var data = await _detailServices.ReadDataTodayFromFile(FilePath, skill);
+                var data = await _detailServices.ReadDataTodayFromFile(FilePath);
 
                 return Ok(data);
             }

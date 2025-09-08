@@ -10,15 +10,15 @@ using WEBAPI_Bravo.Services;
 public class DetailServices: iDetailServices
 {
 
-    public CallCenterData ReadDataFromTxtNew(string filePath, string Skill)
+    public CallCenterData ReadDataFromTxtNew(string filePath)
     {
         var lines = File.ReadAllLines(filePath);
         var data = new CallCenterData();
         var agents = new List<AgentData>();
 
-        var skillList = Skill.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                             .Select(s => s.Trim())
-                             .ToList();
+        //var skillList = Skill.Split(',', StringSplitOptions.RemoveEmptyEntries)
+        //                     .Select(s => s.Trim())
+        //                     .ToList();
 
         foreach (var line in lines)
         {
@@ -63,8 +63,8 @@ public class DetailServices: iDetailServices
                     var splitSkill = parts[9].Trim();
 
                     // 💡 Tambahkan filter berdasarkan skillList
-                    if (skillList.Any(s => string.Equals(s, splitSkill, StringComparison.OrdinalIgnoreCase)))
-                    {
+                    //if (skillList.Any(s => string.Equals(s, splitSkill, StringComparison.OrdinalIgnoreCase)))
+                    //{
                         var agent = new AgentData
                         {
                             AgentName = parts[1],
@@ -82,7 +82,7 @@ public class DetailServices: iDetailServices
                         };
 
                         agents.Add(agent);
-                    }
+                   // }
                 }
             }
         }
@@ -163,12 +163,12 @@ public class DetailServices: iDetailServices
     }
 
 
-    public async Task<IActionResult> ReadDataCallFromFile(string path,string  Skill)
+    public async Task<IActionResult> ReadDataCallFromFile(string path)
     {
 
-        var skillList = Skill.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                       .Select(s => s.Trim().ToLower())
-                       .ToList();
+        //var skillList = Skill.Split(',', StringSplitOptions.RemoveEmptyEntries)
+        //               .Select(s => s.Trim().ToLower())
+        //               .ToList();
 
         if (!File.Exists(path))
         {
@@ -208,15 +208,15 @@ public class DetailServices: iDetailServices
                         .Split(',', StringSplitOptions.RemoveEmptyEntries)
                         .Select(s => s.Trim().ToLower());
 
-                    if (!skillList.Any() || lineSkills.Any(s => skillList.Contains(s)))
-                    {
+                    //if (!skillList.Any() || lineSkills.Any(s => skillList.Contains(s)))
+                    //{
                         var record = new Dictionary<string, string>();
                         for (int j = 0; j < headers.Length; j++)
                         {
                             record[headers[j]] = j < columns.Length ? columns[j] : "";
                         }
                         records.Add(record);
-                    }
+                   // }
                 }
                 else
                 {
@@ -267,7 +267,7 @@ public class DetailServices: iDetailServices
 
     }
 
-    public async Task<IActionResult> ReadDataTodayFromFile(string path, string Skill)
+    public async Task<IActionResult> ReadDataTodayFromFile(string path)
     {
         var lines = await System.IO.File.ReadAllLinesAsync(path);
 
@@ -288,9 +288,9 @@ public class DetailServices: iDetailServices
         var records = new List<Dictionary<string, string>>();
 
         // 🟡 Pisahkan Skill menjadi list (hapus spasi, case-insensitive opsional)
-        var skillList = Skill.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                             .Select(s => s.Trim())
-                             .ToList();
+        //var skillList = Skill.Split(',', StringSplitOptions.RemoveEmptyEntries)
+        //                     .Select(s => s.Trim())
+        //                     .ToList();
 
         for (int i = headerIndex + 1; i < lines.Length; i++)
         {
@@ -304,10 +304,9 @@ public class DetailServices: iDetailServices
             }
 
             // ✅ Cek apakah skill termasuk dalam daftar yang dikirim
-            if (record.ContainsKey("Split/Skill") && skillList.Contains(record["Split/Skill"]))
-            {
+          
                 records.Add(record);
-            }
+           
         }
 
         return new OkObjectResult(new
