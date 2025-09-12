@@ -159,23 +159,7 @@ namespace WEBAPI_Bravo
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
 
-            app.Use(async (context, next) =>
-            {
-                context.Response.OnStarting(() =>
-                {
-                    // Hapus header tertentu
-                    context.Response.Headers.Remove("Server");
-                    context.Response.Headers.Remove("X-Powered-By");
-                    context.Response.Headers.Remove("X-AspNet-Version");
-                    context.Response.Headers.Remove("X-AspNetMvc-Version");
-                    context.Response.Headers.Remove("Content-Type"); 
-
-                   
-                    return Task.CompletedTask;
-                });
-
-                await next();
-            });
+           
 
             //app.UseCors("AllowAllOrigins");
             //app.UseRouting();
@@ -236,8 +220,8 @@ namespace WEBAPI_Bravo
             // Enable Swagger UI
             app.UseSwaggerUI(c =>
             {
-              //   c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Syntera API V1");
+              // c.SwaggerEndpoint("/crm-pertamina-api/swagger/v1/swagger.json", "Syntera API V1");
+                c.SwaggerEndpoint("/DuplicateAPIWallboardPtm/swagger/v1/swagger.json", "Syntera API V1");
                 // c.SwaggerEndpoint("/swagger/v1/swagger.json", "API Pertamina");
             });
         }

@@ -11,6 +11,8 @@ namespace WEBAPI_Bravo.Services
         CallCenterData ReadDataFromTxtNew(string filePath, string skill);
         Task<IActionResult> ReadDataCallFromFile(string path, string skill);
         Task<IActionResult> ReadDataTodayFromFile(string path,string skill);
+        List<PerformanceReport> LoadFromTxt(string path);
+       
        
     }
 }

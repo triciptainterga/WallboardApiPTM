@@ -358,7 +358,8 @@ namespace WEBAPI_Bravo.Controller
                                 users.Add(new datas
                                 {
                                     Name = result.GetString(0),
-                                    Jumlah = result.GetDecimal(1)
+                                    Jumlah = result.GetDecimal(1),
+                                    LastUpdate = DateTime.Now.ToString()
                                 });
                             }
                         }
@@ -421,7 +422,8 @@ namespace WEBAPI_Bravo.Controller
                                 users.Add(new datas
                                 {
                                     Name = result.GetString(0),
-                                    Jumlah = result.GetDecimal(1)
+                                    Jumlah = result.GetDecimal(1),
+                                    LastUpdate = DateTime.Now.ToString()
                                 });
                             }
                         }
@@ -580,7 +582,9 @@ namespace WEBAPI_Bravo.Controller
                                     Name = result.GetString(0),
                                     DateInteraction = result.GetString(1),
                                     Jumlah = result.GetDecimal(2),
-                                    Aht = result.GetDecimal(3)
+                                    SL = result.GetDecimal(3),
+                                    Aht = result.GetDecimal(4),
+                                    LastUpdate = result.GetString(5)
                                 });
                             }
                         }
@@ -710,7 +714,9 @@ namespace WEBAPI_Bravo.Controller
                                     Name = result.GetString(0),
                                     DateInteraction = result.GetDateTime(1).ToString(),
                                     Jumlah = result.GetDecimal(2).ToString(),
-                                    Aht = result.GetDecimal(3).ToString()
+                                    Aht = result.GetDecimal(3).ToString(),
+                                    SL = result.GetDecimal(4).ToString(),
+                                    LastUpdate = result.GetString(5)
                                 });
                             }
                         }
@@ -1471,6 +1477,7 @@ public class datas
 {
     public string Name { get; set; }
     public decimal Jumlah { get; set; }
+    public string LastUpdate { get; set; }
 }
 
 public class dataInteraction
@@ -1479,6 +1486,8 @@ public class dataInteraction
     public string DateInteraction { get; set; }
     public string Jumlah { get; set; }
     public string Aht { get; set; }
+    public string SL { get; set; }
+    public string LastUpdate { get; set; }
 }
 public class dataInteractionDay
 {
@@ -1486,6 +1495,8 @@ public class dataInteractionDay
     public string DateInteraction { get; set; }
     public decimal Jumlah { get; set; }
     public decimal Aht { get; set; }
+    public decimal SL { get; set; }
+    public string LastUpdate { get; set; }
 }
 
 public class SosmedReportResponse

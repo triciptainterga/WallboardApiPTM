@@ -267,6 +267,36 @@ public class DetailServices: iDetailServices
 
     }
 
+
+    public List<PerformanceReport> LoadFromTxt(string filePath)
+    {
+        var reports = new List<PerformanceReport>();
+        var lines = File.ReadAllLines(filePath);
+
+        // cari baris data dimulai dari header "Date;Split/Skill..."
+        var dataStartIndex = Array.FindIndex(lines, l => l.StartsWith("Date;Split/Skill"));
+
+        if (dataStartIndex == -1) return reports;
+
+        for (int i = dataStartIndex + 1; i < lines.Length; i++)
+        {
+            var parts = lines[i].Split(';');
+            if (parts.Length < 6) continue;
+
+            reports.Add(new PerformanceReport
+            {
+                Date = parts[0],
+                SplitSkill = parts[1],
+                COF = int.TryParse(parts[2], out var cof) ? cof : 0,
+                AHT = decimal.TryParse(parts[3], NumberStyles.Any, CultureInfo.InvariantCulture, out var aht) ? aht : 0,
+                Aband = decimal.TryParse(parts[4], NumberStyles.Any, CultureInfo.InvariantCulture, out var aband) ? aband : 0,
+                SL = decimal.TryParse(parts[5], NumberStyles.Any, CultureInfo.InvariantCulture, out var sl) ? sl : 0
+            });
+        }
+
+        return reports;
+    }
+
     public async Task<IActionResult> ReadDataTodayFromFile(string path, string Skill)
     {
         var lines = await System.IO.File.ReadAllLinesAsync(path);
@@ -316,7 +346,15 @@ public class DetailServices: iDetailServices
             Data = records
         });
     }
-
+    public class PerformanceReport
+    {
+        public string Date { get; set; }
+        public string SplitSkill { get; set; }
+        public int COF { get; set; }
+        public decimal AHT { get; set; }
+        public decimal Aband { get; set; }
+        public decimal SL { get; set; }
+    }
     public class DataRecord
     {
         public DateTime Date { get; set; }

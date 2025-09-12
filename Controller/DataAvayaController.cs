@@ -245,6 +245,85 @@ namespace WEBAPI_Bravo.Controller
                 return Content(json, "application/json");
             }
         }
+
+
+        //public IActionResult GetDailyPerformance()
+        //{
+        //    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "report.txt");
+        //    var reports = _service.LoadFromTxt(filePath);
+
+        //    return Ok(reports);
+        //}
+
+
+        [HttpGet("SummaryFromTxt")]
+        public IActionResult SummaryFromTxt()
+        {
+
+
+            string localDirectory = @"E:\DataAvaya";
+            string NameFile = "VOICE_TODAY_ALL.txt";
+            string filePath = Path.Combine(localDirectory, NameFile);
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("File not found");
+
+            var lines = System.IO.File.ReadAllLines(filePath);
+            var reports = new List<SkillReport>();
+
+            // Cari baris yang mulai dengan "V_" (skill data)
+            var dataStartIndex = Array.FindIndex(lines, l => l.StartsWith("V_"));
+            if (dataStartIndex == -1) return Ok("No data found");
+
+            for (int i = dataStartIndex; i < lines.Length; i++)
+            {
+                var parts = lines[i].Split(';');
+                if (parts.Length < 15) continue;
+
+                var skill = parts[0];
+                if (string.IsNullOrWhiteSpace(skill)) continue;
+
+                var report = new SkillReport
+                {
+                    Skill = skill,
+                    Abandon = int.TryParse(parts[4], out var aband) ? aband : 0,
+                    Handled = int.TryParse(parts[6], out var handled) ? handled : 0,
+                    CallOffered = int.TryParse(parts[9], out var offered) ? offered : 0,
+                    AHTSeconds = ParseToSeconds(parts[12]),   // konversi ke detik
+                    Acceptable = int.TryParse(parts[13], out var acc) ? acc : 0
+                };
+
+                reports.Add(report);
+            }
+
+            // Hitung total
+            int totalOffered = reports.Sum(r => r.CallOffered);
+            int totalAbandon = reports.Sum(r => r.Abandon);
+            int totalHandled = reports.Sum(r => r.Handled);
+            int totalAcceptable = reports.Sum(r => r.Acceptable);
+
+            // Weighted Avg AHT
+            decimal avgAHT = totalHandled > 0
+                ? (decimal)reports.Sum(r => r.Handled * r.AHTSeconds) / totalHandled
+                : 0;
+
+            // Service Level
+            decimal sl = totalOffered > 0
+                ? (decimal)totalAcceptable / totalOffered * 100
+                : 0;
+
+            return Ok(new
+            {
+                TotalOffered = totalOffered,
+                TotalHandled = totalHandled,
+                TotalAbandon = totalAbandon,
+                AvgAHTSeconds = Math.Round(avgAHT, 2),
+                ServiceLevel = Math.Round(sl, 2),
+                PerSkill = reports
+            });
+        }
+
+
+
         [HttpGet("ReportTodayWB")]
         public async Task<IActionResult> ReportTodayWB(string Tenant, string channel)
         {
@@ -277,7 +356,7 @@ namespace WEBAPI_Bravo.Controller
                     return NotFound("File not found.");
                 }
 
-                var data = await _detailServices.ReadDataTodayFromFile(FilePath, skill);
+                var data =  _detailServices.LoadFromTxt(FilePath);
 
                 return Ok(data);
             }
@@ -887,6 +966,31 @@ namespace WEBAPI_Bravo.Controller
             return acdDataList;
         }
 
+        private int ParseToSeconds(string timeString)
+        {
+            if (string.IsNullOrWhiteSpace(timeString)) return 0;
+
+            if (int.TryParse(timeString, out var secondsOnly))
+                return secondsOnly;
+
+            var parts = timeString.Split(':');
+            if (parts.Length == 2) // mm:ss
+            {
+                int minutes = int.Parse(parts[0]);
+                int seconds = int.Parse(parts[1]);
+                return (minutes * 60) + seconds;
+            }
+            else if (parts.Length == 3) // hh:mm:ss
+            {
+                int hours = int.Parse(parts[0]);
+                int minutes = int.Parse(parts[1]);
+                int seconds = int.Parse(parts[2]);
+                return (hours * 3600) + (minutes * 60) + seconds;
+            }
+
+            return 0;
+        }
+
 
         //public List<SplitSkillSummary> ParseSummaryData(string input)
         //{
@@ -1053,6 +1157,7 @@ public class Totals
     public double PercentWithinServiceLevel { get; set; }
     public double ServiceLevel { get; set; }
 }
+
 public class NewSummaryDaily
 {
     public string Date { get; set; }
@@ -1190,6 +1295,16 @@ public class AgentData
     public string Level { get; set; }
     public string Time { get; set; }
     public string VDNName { get; set; }
+}
+
+public class SkillReport
+{
+    public string Skill { get; set; }
+    public int CallOffered { get; set; }
+    public int Abandon { get; set; }
+    public int Handled { get; set; }
+    public int Acceptable { get; set; }
+    public int AHTSeconds { get; set; }
 }
 
 
