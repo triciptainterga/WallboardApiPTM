@@ -1,34 +1,30 @@
 {
   "format": 1,
   "restore": {
-    "C:\\2025ApiPertamina\\WallboardApiPTM\\WEBAPI_Bravo.csproj": {}
+    "D:\\API\\WallboardApiPTM\\WEBAPI_Bravo.csproj": {}
   },
   "projects": {
-    "C:\\2025ApiPertamina\\WallboardApiPTM\\WEBAPI_Bravo.csproj": {
+    "D:\\API\\WallboardApiPTM\\WEBAPI_Bravo.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\2025ApiPertamina\\WallboardApiPTM\\WEBAPI_Bravo.csproj",
+        "projectUniqueName": "D:\\API\\WallboardApiPTM\\WEBAPI_Bravo.csproj",
         "projectName": "WEBAPI_Bravo",
-        "projectPath": "C:\\2025ApiPertamina\\WallboardApiPTM\\WEBAPI_Bravo.csproj",
-        "packagesPath": "C:\\Users\\Dadan\\.nuget\\packages\\",
-        "outputPath": "C:\\2025ApiPertamina\\WallboardApiPTM\\obj\\",
+        "projectPath": "D:\\API\\WallboardApiPTM\\WEBAPI_Bravo.csproj",
+        "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
+        "outputPath": "D:\\API\\WallboardApiPTM\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
-          "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Dadan\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 20.1.config",
+          "C:\\Users\\LENOVO\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net5.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\DevExpress 20.1\\Components\\System\\Components\\Packages": {},
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
@@ -42,7 +38,13 @@
           "warnAsError": [
             "NU1605"
           ]
-        }
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net5.0": {
@@ -111,7 +113,8 @@
             "net47",
             "net471",
             "net472",
-            "net48"
+            "net48",
+            "net481"
           ],
           "assetTargetFallback": true,
           "warn": true,
@@ -123,7 +126,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.416\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305\\RuntimeIdentifierGraph.json"
         }
       }
     }

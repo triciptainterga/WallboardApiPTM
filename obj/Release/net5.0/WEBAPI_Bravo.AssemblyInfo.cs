@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WEBAPI_Bravo")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7996ef5b6602f6bc03d02eb58bced0f875b79e3e")]
 [assembly: System.Reflection.AssemblyProductAttribute("WEBAPI_Bravo")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WEBAPI_Bravo")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -65,7 +65,7 @@ namespace WEBAPI_Bravo.Controller
                                     ID = result.GetInt32(0),
                                     TenantID = result.GetString(1),
                                     DomainAPI = result.GetString(2),
-                                    TenantApiKey = result.GetString(3),
+                                   // TenantApiKey = result.GetString(3),
                                     URLtoken = result.GetString(4),
                                     URLtoken_Body = JsonConvert.DeserializeObject<List<string>>(result.GetString(5)),
                                     URLtoken_ResponseSuc = JsonConvert.DeserializeObject<List<string>>(result.GetString(6)),
@@ -652,7 +652,6 @@ public class dataTenant
     public int ID { get; set; }
     public string TenantID { get; set; }
     public string DomainAPI { get; set; }
-    public string TenantApiKey { get; set; }
     public string URLtoken { get; set; }
     public List<string> URLtoken_Body { get; set; }
     public List<string> URLtoken_ResponseSuc { get; set; }

@@ -58,11 +58,12 @@ namespace WEBAPI_Bravo.Controller
                 {
 
                     var url = _configuration["ApiSettings:AuthTokenUrl"];
-               
+                    var appKey = _configuration["ApiSettings:AppKey"];
+
                     var payload = new
                     {
                         mobileNumber = request.mobileNumber,
-                        apiKey = request.apiKey
+                        apiKey = appKey
                     };
 
                     var json = JsonConvert.SerializeObject(payload);
@@ -99,11 +100,39 @@ namespace WEBAPI_Bravo.Controller
             }
         }
 
+        [HttpGet("User")]
+        public async Task<IActionResult> GetUser([FromQuery] string token)
+        {
+            try
+            {
+                var url = _configuration["ApiSettings:WrapperUserUrl"];
+               
+                // Tambahkan token ke query string
+                var requestUrl = $"{url}?token={token}";
 
+                var response = await _httpClient.GetAsync(requestUrl);
+                var content = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                    return StatusCode((int)response.StatusCode, new { error = content });
+
+                // Deserialize jika mau langsung ke object
+                var result = JsonConvert.DeserializeObject<object>(content);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    error = ex.Message,
+                    innerException = ex.GetBaseException()?.Message
+                });
+            }
+        }
         public class LoginMyPertamina
         {
             public string mobileNumber { get; set; }
-            public string apiKey { get; set; }
 
         }
 

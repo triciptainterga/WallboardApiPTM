@@ -782,7 +782,10 @@ namespace WEBAPI_Bravo.Controller
                                     Name = result.GetString(0),
                                     DateInteraction = result.GetDateTime(1).ToString(),
                                     Jumlah = result.GetDecimal(2).ToString(),
-                                    Aht = result.GetDecimal(3).ToString()
+                                    Aht = result.GetDecimal(3).ToString(),
+                                    SL = result.GetDecimal(4).ToString(),
+                                    LastUpdate = result.GetString(5)
+
                                 });
                             }
                         }
@@ -978,7 +981,9 @@ namespace WEBAPI_Bravo.Controller
                                     Name = result.GetString(0),
                                     DateInteraction = result.GetString(1),
                                     Jumlah = result.GetDecimal(2).ToString(),
-                                    Aht = result.GetDecimal(3).ToString()
+                                    Aht = result.GetDecimal(3).ToString(),
+                                    SL = result.GetDecimal(4).ToString(),
+                                    LastUpdate = result.GetString(5)
                                 });
                             }
                         }
